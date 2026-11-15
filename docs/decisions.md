@@ -35,8 +35,11 @@ Every decision taken for TickTracker, in the order it was made, with the reason 
 | [D20](#d20-native-android-app-with-on-device-alarms) | 2026-11-14 | Native Android app with on-device alarms | Active |
 | [D21](#d21-kotlin-and-jetpack-compose) | 2026-11-14 | Kotlin and Jetpack Compose | Active |
 | [D22](#d22-reminders-stay-until-dismissed) | 2026-11-14 | Reminders stay until dismissed | Active |
-| [D23](#d23-room-database-gradle-builds-direct-apk-install) | 2026-11-14 | Room database, Gradle builds, direct APK install | Proposed |
+| [D23](#d23-room-database-gradle-builds-direct-apk-install) | 2026-11-14 | Room database, Gradle builds, direct APK install | Active |
 | [D24](#d24-git-is-managed-by-the-owner-only) | 2026-11-14 | Git is managed by the owner only | Active |
+| [D25](#d25-project-setup) | 2026-11-14 | Project setup: package, SDK levels, structure | Proposed |
+| [D26](#d26-tracking-behaviours-confirmed) | 2026-11-15 | Tracking behaviours confirmed | Active |
+| [D27](#d27-a-habit-can-be-deleted-from-its-card) | 2026-11-15 | A habit can be deleted from its card | Proposed |
 
 ---
 
@@ -322,11 +325,11 @@ The options considered were a normal notification, one that stays until dismisse
 
 ## D23: Room database, Gradle builds, direct APK install
 
-**Date:** 2026-11-14 · **Status:** Proposed
+**Date:** 2026-11-14 · **Status:** Active
 
 **Decision.** Data is stored in a Room database (SQLite) behind a repository layer. The app is built with Gradle from the command line; Android Studio is optional. It is installed directly on the phone over USB, with no Play Store listing.
 
-**Reason.** Proposed during planning as the standard choices for a local Android app. Room fits the relational data here (habits, entries, categories, reminders). The build machine already has JDK 17 and the Android SDK. The owner has accepted the README that listed these but has not confirmed them individually, so this stays Proposed until the project is scaffolded.
+**Reason.** Proposed during planning as the standard choices for a local Android app. Room fits the relational data here (habits, entries, categories, reminders). The build machine already has JDK 17 and the Android SDK. Became Active when the owner asked for the project to be scaffolded on this basis.
 
 **Effect.** Sets the storage and build tooling. Build prerequisites are JDK 17, the Android SDK with `ANDROID_HOME` set, and a phone with USB debugging enabled.
 
@@ -340,6 +343,58 @@ The options considered were a normal notification, one that stays until dismisse
 
 **Effect.** Changes from the assistant arrive as uncommitted edits for the owner to review, stage and commit. Commit history reflects the owner's own grouping of changes.
 
+## D25: Project setup
+
+**Date:** 2026-11-14 · **Status:** Proposed
+
+**Decision.** Choices made while creating the project skeleton:
+
+| Choice | Value |
+| --- | --- |
+| Package name and app ID | `com.ticktracker` |
+| Minimum Android version | Android 8.0 (API 26) |
+| Target SDK / compile SDK | 36 / 37 |
+| Modules | One, `app` |
+| Sharing objects between classes | A hand-written container (`AppContainer`), no dependency injection library |
+| Navigation | Navigation Compose with one activity |
+| Room version | Room 2.8, not the newer Room 3 |
+| Library versions | Latest stable releases on 2026-11-14, listed in `gradle/libs.versions.toml` |
+| Reminder storage | Reminders link to habits only, until Plan and Tasks are designed |
+| Database migrations | Not set up yet. Must be added before real data is stored, or an update could wipe it |
+
+**Reason.** Made by the assistant during scaffolding, to get a building project. API 26 lets the app use the standard date and time classes with no extra library, and covers any phone from 2017 onward. One module and a hand-written container keep a single-person app simple. Room 2.8 was chosen over Room 3 as the long-established version. Compile SDK 37 is required by the current libraries. Not yet confirmed by the owner.
+
+**Effect.** Fixes the project layout described in [file_guide.md](file_guide.md). The app ID is hard to change once the app is installed with data, because Android treats a new ID as a different app. Linking reminders only to habits means the reminders table will change when Plan and Tasks arrive.
+
+## D26: Tracking behaviours confirmed
+
+**Date:** 2026-11-15 · **Status:** Active
+
+**Decision.** The behaviours that had been assumed while writing the flow are confirmed:
+
+1. **Undo a tick.** Tapping a completed tick again undoes it, on the same day. The same applies to skip, resisted and slipped.
+2. **Multiple per day.** Each tap of the tick button adds one, up to the target. Tapping again when full clears the day.
+3. **Measurable streaks.** A day counts toward the streak only when the entry reaches the target.
+4. **Weekly measurable target.** With a Weekly goal, the typed target is for the whole week, and the week counts when its Total reaches it.
+5. **Skip.** Available only on weekly-goal habits. A skipped day adds nothing to the week's count and does not break anything.
+6. **Streak includes today.** The streak counts today (or this week) as soon as it is met. Until then it still shows the run up to yesterday (or last week); an unfinished day has not broken the streak.
+7. **Reminders always fire.** A reminder is not skipped when the habit is already done for the day.
+8. **Quit habits have no repeat goal.** A Quit habit is always judged once a day, so the wizard does not ask for one.
+
+**Reason.** The owner reviewed the assumptions listed in flow_state.md and confirmed them as correct.
+
+**Effect.** These rules are implemented in `domain/HabitProgress.kt` and `ui/habits/HabitsViewModel.kt` and covered by unit tests. Because reminders always fire, the reminder code never needs to look at the day's entries.
+
+## D27: A habit can be deleted from its card
+
+**Date:** 2026-11-15 · **Status:** Proposed
+
+**Decision.** The overflow menu on every habit card has "Delete habit". After a confirmation, the habit is removed together with its history and its reminders. There is no undo and no way to edit a habit yet.
+
+**Reason.** Added by the assistant while building the cards, so that habits created while testing can be removed. Not yet confirmed by the owner. What can be edited after creation is still open.
+
+**Effect.** Deleting is permanent: the entries are removed from the database, and the reminders are cancelled with Android.
+
 ---
 
 ## Open items
@@ -347,7 +402,6 @@ The options considered were a normal notification, one that stays until dismisse
 Not yet decided. Each becomes a numbered decision when settled.
 
 - Add flows for Plan blocks and Tasks, including how their reminders are set.
-- Whether a habit reminder is skipped once the habit is done for the day.
 - Data export and backup, since data is device-only (D02).
 - Light theme, or dark only.
-- Behaviour gaps in habit tracking, listed in [flow_state.md](flow_state.md#7-not-yet-decided).
+- Editing a habit after it is created: what can be changed, and what happens to its history.

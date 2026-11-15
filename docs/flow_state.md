@@ -4,7 +4,7 @@ How TickTracker flows, from creating a habit to tracking it day after day, and w
 
 This file covers Habits and reminders. Plan and Tasks will be added once their flows are designed.
 
-Where a behaviour has not been decided, it is marked **Assumed** here and listed in [Not yet decided](#7-not-yet-decided).
+Anything still undecided is listed in [Not yet decided](#7-not-yet-decided).
 
 ## 1. The whole flow at a glance
 
@@ -111,7 +111,7 @@ stateDiagram-v2
 
 - **Not done:** tick button is grey, today's heatmap cell is outlined and empty.
 - **Done:** tick button and today's cell fill with the habit's colour.
-- **Assumed:** tapping a filled tick undoes it.
+- Tapping a filled tick undoes it (D26).
 
 ### 4.2 Tick, Quit
 
@@ -154,7 +154,7 @@ stateDiagram-v2
 
 Today's state is a count from 0 up to the target (e.g. 0/2, 1/2, 2/2).
 
-- **Assumed:** each tap of the tick button adds one, until the target is reached. The day is complete at the target.
+- Each tap of the tick button adds one, until the target is reached. The day is complete at the target. Tapping again when full clears the day (D26).
 
 ### 4.5 Measurable
 
@@ -202,8 +202,8 @@ What "met the goal" means for each habit:
 | Tick, Build, multiple per day | The day's count reaches the target |
 | Tick, Build, weekly goal | Done days in the week reach the goal |
 | Tick, Quit | The day is Resisted |
-| Measurable, Everyday | **Assumed:** the day's entry reaches the daily target |
-| Measurable, Weekly | **Assumed:** the week's Total reaches the weekly target |
+| Measurable, Everyday | The day's entry reaches the daily target |
+| Measurable, Weekly | The week's Total reaches the weekly target |
 
 The week runs Monday to Sunday everywhere in the app.
 
@@ -236,15 +236,16 @@ stateDiagram-v2
 
 ## 7. Not yet decided
 
-Gaps found while writing this flow. Sections above marked **Assumed** depend on these.
+Questions found while writing this flow. Questions 1 to 7 and 9 were confirmed by the owner on 2026-11-15 and are now decision D26; the sections above already describe them. Only question 8 is still open.
 
-| # | Question | Assumed for now |
-| --- | --- | --- |
-| 1 | Can a Tick be undone by tapping it again? | Yes, on the same day |
-| 2 | How is a multiple-per-day habit logged? | Each tap adds one, up to the target |
-| 3 | Does a measurable day need to reach the target to count toward the streak? | Yes |
-| 4 | For a Measurable habit with a Weekly goal, is the typed target per day or per week? | Per week |
-| 5 | Does a skipped day break a streak, and on which habits is skip available? | Skip exists only on weekly-goal habits, where it has no effect on the weekly count |
-| 6 | Is the streak shown as of yesterday, or does it include today once today is met? | Includes today once met |
-| 7 | Is a reminder skipped when the habit is already done for the day? | No, it always fires |
-| 8 | Editing and deleting a habit from the overflow menu: what can be changed after creation, and what happens to its history? | Not assumed |
+| # | Question | Answer | Status |
+| --- | --- | --- | --- |
+| 1 | Can a Tick be undone by tapping it again? | Yes, on the same day | Confirmed (D26) |
+| 2 | How is a multiple-per-day habit logged? | Each tap adds one, up to the target. Tapping again when full clears the day | Confirmed (D26) |
+| 3 | Does a measurable day need to reach the target to count toward the streak? | Yes | Confirmed (D26) |
+| 4 | For a Measurable habit with a Weekly goal, is the typed target per day or per week? | Per week | Confirmed (D26) |
+| 5 | Does a skipped day break a streak, and on which habits is skip available? | Skip exists only on weekly-goal habits, where it has no effect on the weekly count | Confirmed (D26) |
+| 6 | Is the streak shown as of yesterday, or does it include today once today is met? | Includes today once met | Confirmed (D26) |
+| 7 | Is a reminder skipped when the habit is already done for the day? | No, it always fires | Confirmed (D26) |
+| 8 | Editing a habit after creation: what can be changed, and what happens to its history? | Not decided. Deleting is built (D27); editing is not | Open |
+| 9 | Does a Quit habit get a repeat goal (multiple per day, weekly)? | No. A Quit habit is always judged once a day, so the wizard skips the repeat goal for it | Confirmed (D26) |

@@ -1,0 +1,212 @@
+package com.ticktracker.ui
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.ticktracker.ui.habits.add.AddHabitScreen
+import com.ticktracker.ui.habits.HabitsScreen
+import com.ticktracker.ui.plan.PlanScreen
+import com.ticktracker.ui.tasks.TasksScreen
+import com.ticktracker.ui.theme.CardOutline
+import com.ticktracker.ui.theme.CardSurface
+import com.ticktracker.util.headerDate
+import com.ticktracker.util.today
+
+/** The three sections reachable from the bottom navigation (D01). */
+enum class Section(val route: String, val label: String, val icon: ImageVector) {
+    HABITS("habits", "Habits", Icons.Filled.CheckCircle),
+    PLAN("plan", "Plan", Icons.Filled.DateRange),
+    TASKS("tasks", "Tasks", Icons.AutoMirrored.Filled.List),
+}
+
+/** Routes that are not sections. They are shown full screen, without the shell. */
+object Routes {
+    const val ADD_HABIT = "add-habit"
+}
+
+/** The app shell: header, the current screen, and the floating bottom bar. */
+@Composable
+fun AppRoot() {
+    val nav = rememberNavController()
+    val backStackEntry by nav.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+    val section = Section.entries.firstOrNull { it.route == currentRoute }
+
+    Scaffold(
+        topBar = { if (section != null) AppHeader() },
+        bottomBar = {
+            if (section != null) {
+                BottomBar(
+                    current = section,
+                    onSelect = { nav.switchSection(it) },
+                    onAdd = {
+                        when (section) {
+                            Section.HABITS -> nav.navigate(Routes.ADD_HABIT)
+                            Section.PLAN -> Unit // TODO: add block flow, not designed yet
+                            Section.TASKS -> Unit // TODO: add task flow, not designed yet
+                        }
+                    },
+                )
+            }
+        },
+    ) { padding ->
+        NavHost(
+            navController = nav,
+            startDestination = Section.HABITS.route,
+            // Marking the padding as consumed stops screens from adding the system bar space twice.
+            modifier = Modifier
+                .padding(padding)
+                .consumeWindowInsets(padding),
+        ) {
+            composable(Section.HABITS.route) { HabitsScreen() }
+            composable(Section.PLAN.route) { PlanScreen() }
+            composable(Section.TASKS.route) { TasksScreen() }
+            composable(Routes.ADD_HABIT) { AddHabitScreen(onClose = { nav.popBackStack() }) }
+        }
+    }
+}
+
+private fun NavHostController.switchSection(section: Section) {
+    navigate(section.route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
+@Composable
+private fun AppHeader() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = headerDate(today()),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+        )
+        IconButton(onClick = { /* TODO: settings screen */ }) {
+            Icon(
+                imageVector = Icons.Filled.Settings,
+                contentDescription = "Settings",
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun BottomBar(
+    current: Section,
+    onSelect: (Section) -> Unit,
+    onAdd: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Surface(
+            modifier = Modifier.align(Alignment.Center),
+            shape = CircleShape,
+            color = CardSurface,
+            border = BorderStroke(1.dp, CardOutline),
+        ) {
+            Row(
+                modifier = Modifier.padding(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Section.entries.forEach { section ->
+                    SectionButton(
+                        section = section,
+                        selected = section == current,
+                        onClick = { onSelect(section) },
+                    )
+                }
+            }
+        }
+        FloatingActionButton(
+            onClick = onAdd,
+            modifier = Modifier.align(Alignment.CenterEnd),
+            shape = RoundedCornerShape(18.dp),
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        ) {
+            Icon(Icons.Filled.Add, contentDescription = "Add")
+        }
+    }
+}
+
+/** One item in the bottom bar. The selected section shows its label in a green pill. */
+@Composable
+private fun SectionButton(section: Section, selected: Boolean, onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Row(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(if (selected) colors.primary else CardSurface)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = section.icon,
+            contentDescription = section.label,
+            modifier = Modifier.size(22.dp),
+            tint = if (selected) colors.onPrimary else colors.onSurfaceVariant,
+        )
+        if (selected) {
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = section.label,
+                color = colors.onPrimary,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
