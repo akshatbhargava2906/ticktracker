@@ -30,13 +30,19 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -51,12 +57,19 @@ import com.ticktracker.ui.theme.CardOutline
 import com.ticktracker.ui.theme.CardSurface
 import com.ticktracker.util.headerDate
 import com.ticktracker.util.today
+import com.ticktracker.util.todayFlow
 
 /** The three sections reachable from the bottom navigation (D01). */
 enum class Section(val route: String, val label: String, val icon: ImageVector) {
     HABITS("habits", "Habits", Icons.Filled.CheckCircle),
     PLAN("plan", "Plan", Icons.Filled.DateRange),
     TASKS("tasks", "Tasks", Icons.AutoMirrored.Filled.List),
+}
+
+/** Something to show straight away, set when the app was opened by tapping a reminder. */
+sealed interface OpenTarget {
+    data class Habit(val id: Long) : OpenTarget
+    data class Task(val id: Long) : OpenTarget
 }
 
 /** Routes that are not sections. They are shown full screen, without the shell. */
@@ -66,11 +79,31 @@ object Routes {
 
 /** The app shell: header, the current screen, and the floating bottom bar. */
 @Composable
-fun AppRoot() {
+fun AppRoot(
+    openTarget: OpenTarget? = null,
+    onTargetOpened: () -> Unit = {},
+) {
     val nav = rememberNavController()
     val backStackEntry by nav.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val section = Section.entries.firstOrNull { it.route == currentRoute }
+
+    // How many times + was tapped on the Tasks section. The Tasks screen opens a new task for each.
+    var addTaskRequests by rememberSaveable { mutableIntStateOf(0) }
+
+    // Opened from a reminder: leave whatever screen is showing and go to the section the
+    // habit or task lives in. That screen then brings it into view.
+    LaunchedEffect(openTarget) {
+        val destination = when (openTarget) {
+            is OpenTarget.Habit -> Section.HABITS
+            is OpenTarget.Task -> Section.TASKS
+            null -> return@LaunchedEffect
+        }
+        nav.navigate(destination.route) {
+            popUpTo(nav.graph.findStartDestination().id)
+            launchSingleTop = true
+        }
+    }
 
     Scaffold(
         topBar = { if (section != null) AppHeader() },
@@ -83,7 +116,7 @@ fun AppRoot() {
                         when (section) {
                             Section.HABITS -> nav.navigate(Routes.ADD_HABIT)
                             Section.PLAN -> Unit // TODO: add block flow, not designed yet
-                            Section.TASKS -> Unit // TODO: add task flow, not designed yet
+                            Section.TASKS -> addTaskRequests++
                         }
                     },
                 )
@@ -98,9 +131,20 @@ fun AppRoot() {
                 .padding(padding)
                 .consumeWindowInsets(padding),
         ) {
-            composable(Section.HABITS.route) { HabitsScreen() }
+            composable(Section.HABITS.route) {
+                HabitsScreen(
+                    focusHabitId = (openTarget as? OpenTarget.Habit)?.id,
+                    onFocusHandled = onTargetOpened,
+                )
+            }
             composable(Section.PLAN.route) { PlanScreen() }
-            composable(Section.TASKS.route) { TasksScreen() }
+            composable(Section.TASKS.route) {
+                TasksScreen(
+                    addRequests = addTaskRequests,
+                    openTaskId = (openTarget as? OpenTarget.Task)?.id,
+                    onTaskOpened = onTargetOpened,
+                )
+            }
             composable(Routes.ADD_HABIT) { AddHabitScreen(onClose = { nav.popBackStack() }) }
         }
     }
@@ -116,6 +160,8 @@ private fun NavHostController.switchSection(section: Section) {
 
 @Composable
 private fun AppHeader() {
+    // Follows the clock, so the date changes at midnight while the app is open.
+    val date by remember { todayFlow() }.collectAsStateWithLifecycle(initialValue = today())
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -125,7 +171,7 @@ private fun AppHeader() {
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            text = headerDate(today()),
+            text = headerDate(date),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
         )

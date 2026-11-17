@@ -58,8 +58,9 @@ fun HabitCardFrame(color: Long, content: @Composable ColumnScope.() -> Unit) {
 }
 
 /**
- * The top row of a card: icon, name, streak (plus optional progress text),
- * the action buttons, and the overflow menu.
+ * The top of a card. First row: icon, name, the action buttons and the overflow menu.
+ * Second row: the streak, plus optional progress text.
+ * Must be called inside a column, such as [HabitCardFrame].
  */
 @Composable
 fun HabitCardHeader(
@@ -71,35 +72,44 @@ fun HabitCardHeader(
     val habit = card.habit
     Row(verticalAlignment = Alignment.CenterVertically) {
         HabitBadge(icon = habit.icon, color = habit.color, size = 52.dp)
-        Column(
-            Modifier
+        Text(
+            text = habit.name,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 12.dp),
-        ) {
+        )
+        actions()
+        OverflowMenu(onDelete)
+    }
+
+    // The streak has a line of its own, across the full width of the card. Beside the
+    // buttons it was squeezed out of view on cards with two of them (Quit, weekly goal, Measure).
+    Row(
+        modifier = Modifier.padding(top = 10.dp, start = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "🔥 " + habit.streakText(card.streak),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+        )
+        if (progress != null) {
             Text(
-                text = habit.name,
-                style = MaterialTheme.typography.titleLarge,
+                text = "  •  ",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = progress,
+                color = Color(habit.color),
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Text(
-                text = "🔥 " + habit.streakText(card.streak),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-            )
-            if (progress != null) {
-                Text(
-                    text = progress,
-                    color = Color(habit.color),
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
         }
-        actions()
-        OverflowMenu(onDelete)
     }
 }
 

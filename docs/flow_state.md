@@ -2,9 +2,9 @@
 
 How TickTracker flows, from creating a habit to tracking it day after day, and what state each thing can be in along the way. The rules here come from [decisions.md](decisions.md); decision numbers such as (D16) point to the entry that set the rule.
 
-This file covers Habits and reminders. Plan and Tasks will be added once their flows are designed.
+This file covers Habits, Tasks and reminders. Plan will be added when it is built.
 
-Anything still undecided is listed in [Not yet decided](#7-not-yet-decided).
+Anything still undecided is listed in [Not yet decided](#8-not-yet-decided).
 
 ## 1. The whole flow at a glance
 
@@ -209,6 +209,8 @@ The week runs Monday to Sunday everywhere in the app.
 
 ## 6. Reminders
 
+This section is about habit reminders. Task reminders work differently and are in [section 7.4](#74-task-reminders).
+
 A reminder belongs to one habit and holds one time of day. It repeats every day (D13) and is independent of when the habit was created (D14).
 
 ```mermaid
@@ -234,7 +236,82 @@ stateDiagram-v2
 
 **What can stop a reminder.** Notification permission denied, exact alarm permission denied, or the phone's battery optimisation putting the app to sleep. The app should detect each and tell the user how to fix it (D20).
 
-## 7. Not yet decided
+## 7. Tasks
+
+Tasks follow decision D29. Unlike habit entries, tasks are not locked by day: any task can be changed at any time.
+
+### 7.1 Creating and editing a task
+
+```mermaid
+flowchart TD
+    A[+ in the bottom bar] --> S[Task sheet, dated today]
+    B[Add task under a day] --> S2[Task sheet, dated that day]
+    C[New Task under All Tasks] --> S
+    D[Tap a task] --> S3[Task sheet with the task]
+    S --> E[Edit title, date, time, reminder, repeat, list, priority, sub-tasks]
+    S2 --> E
+    S3 --> E
+    E --> F{How the sheet is left}
+    F -- Closed, title filled in --> G[Task saved, reminder set or cancelled]
+    F -- Closed, title empty --> H[Nothing saved]
+    F -- Delete --> I[Task removed, reminder cancelled]
+```
+
+Fields depend on each other:
+
+- A **time** needs a **date**. Picking a time on a task with no date sets the date to today.
+- A **reminder** needs a **time**. Until there is one, the row reads "Set a time first".
+- A **repeat** needs a **date**. Choosing a repeat on a task with no date sets the date to today.
+- Clearing the **date** clears the time, the reminder and the repeat.
+
+### 7.2 A task's state
+
+```mermaid
+stateDiagram-v2
+    [*] --> Open: saved
+    Open --> Done: tap circle
+    Done --> Open: tap circle again
+    Open --> [*]: deleted
+    Done --> [*]: deleted
+```
+
+When a task becomes **Done**:
+
+1. Its reminder, if still pending, is cancelled.
+2. If it repeats and has not already produced its next occurrence, a new open task is created for the next date, with the same details and its sub-tasks unticked.
+
+The next date is counted from the task's own date (daily: the next day; weekly: the same weekday; monthly: the same day of the month). If that date is already in the past because the task was overdue, further occurrences are skipped until the date is today or later.
+
+### 7.3 Where a task appears
+
+| Place | Shows |
+| --- | --- |
+| Timeline tab | Tasks that have a date, from every list, grouped by day with the newest day at the top. Always shows tomorrow, today and the last 14 days, plus any other day with a task. Each day shows its open tasks, a progress count, "All done!" when nothing is open, a collapsible Completed list, and "Add task". |
+| All Tasks tab | One list at a time. Open tasks grouped by priority, High first, each sorted by date. Then "New Task" and a collapsible Completed list. Tasks with no date appear only here. |
+| Search | Narrows both tabs to tasks whose title contains the text. |
+
+### 7.4 Task reminders
+
+A task has at most one reminder, counted back from its time: at the time, or 5, 10, 15, 30 or 60 minutes before.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Scheduled: task saved with a reminder still ahead
+    Scheduled --> Showing: reminder time reached
+    Scheduled --> Cancelled: task ticked off, deleted, or reminder removed
+    Scheduled --> Scheduled: date, time or offset changed
+    Showing --> Opened: user taps it
+    Showing --> Dismissed: user swipes it away
+    Opened --> [*]: app opens the task sheet
+    Dismissed --> [*]
+    Cancelled --> [*]
+```
+
+- It fires **once**, not daily. A repeating task gets a fresh reminder on each new occurrence.
+- A reminder whose time has already passed is not scheduled.
+- Like habit reminders, it stays until dismissed, survives a restart, and is re-registered whenever the app is opened (section 6).
+
+## 8. Not yet decided
 
 Questions found while writing this flow. Questions 1 to 7 and 9 were confirmed by the owner on 2026-11-15 and are now decision D26; the sections above already describe them. Only question 8 is still open.
 

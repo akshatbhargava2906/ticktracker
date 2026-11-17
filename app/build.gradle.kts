@@ -34,6 +34,11 @@ android {
     }
 }
 
+ksp {
+    // Room writes the database structure of each version here. These files are committed.
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -23,11 +24,13 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
@@ -54,14 +57,38 @@ enum class HabitsTab(val label: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HabitsScreen(viewModel: HabitsViewModel = viewModel(factory = HabitsViewModel.Factory)) {
+fun HabitsScreen(
+    /** A habit to bring into view, set when the app was opened from its reminder. */
+    focusHabitId: Long? = null,
+    onFocusHandled: () -> Unit = {},
+    viewModel: HabitsViewModel = viewModel(factory = HabitsViewModel.Factory),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val hasReminders by viewModel.hasReminders.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
     var tab by rememberSaveable { mutableStateOf(HabitsTab.TICK) }
     var categoryFilter by rememberSaveable { mutableStateOf<Long?>(null) }
 
     // The habit whose amount is being entered, and the habit waiting for a delete confirmation.
     var enteringAmountFor by remember { mutableStateOf<HabitCardState?>(null) }
     var deleting by remember { mutableStateOf<HabitEntity?>(null) }
+
+    // Opened from a reminder: switch to the tab the habit lives on, drop any filter that
+    // would hide it, and scroll to its card. Waits until the habits have loaded.
+    LaunchedEffect(focusHabitId, uiState.cards) {
+        val id = focusHabitId ?: return@LaunchedEffect
+        if (uiState.cards.isEmpty()) return@LaunchedEffect
+        val target = uiState.cards.firstOrNull { it.habit.id == id }
+        if (target != null) {
+            val kind = target.habit.kind
+            tab = if (kind == HabitKind.MEASURABLE) HabitsTab.MEASURE else HabitsTab.TICK
+            categoryFilter = null
+            val index = uiState.cards.filter { it.habit.kind == kind }.indexOf(target)
+            withFrameNanos { } // let the list switch to the new tab before scrolling
+            listState.scrollToItem(index.coerceAtLeast(0))
+        }
+        onFocusHandled()
+    }
 
     Column(Modifier.fillMaxSize()) {
         PrimaryTabRow(
@@ -98,10 +125,15 @@ fun HabitsScreen(viewModel: HabitsViewModel = viewModel(factory = HabitsViewMode
             )
         }
 
+        if (hasReminders) {
+            ReminderHealthBanner(Modifier.padding(horizontal = 16.dp, vertical = 6.dp))
+        }
+
         if (visible.isEmpty()) {
             EmptyHabits(tab)
         } else {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),

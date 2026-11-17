@@ -15,13 +15,20 @@ import com.ticktracker.MainActivity
 import com.ticktracker.R
 import com.ticktracker.data.db.HabitEntity
 import com.ticktracker.data.db.ReminderEntity
+import com.ticktracker.data.db.TaskEntity
+import com.ticktracker.util.formatClock
 
 /** Builds and posts reminder notifications. */
 object ReminderNotifications {
     private const val CHANNEL_ID = "reminders"
+    private const val TAG_HABIT = "habit"
+    private const val TAG_TASK = "task"
 
     /** Extra on the launch intent naming the habit the tapped reminder belongs to. */
     const val EXTRA_HABIT_ID = "habit_id"
+
+    /** Extra on the launch intent naming the task the tapped reminder belongs to. */
+    const val EXTRA_TASK_ID = "open_task_id"
 
     fun createChannel(context: Context) {
         val channel = NotificationChannel(
@@ -34,35 +41,71 @@ object ReminderNotifications {
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 
+    /** Posts a habit reminder. */
+    fun show(context: Context, reminder: ReminderEntity, habit: HabitEntity) {
+        post(
+            context = context,
+            tag = TAG_HABIT,
+            id = reminder.id.toInt(),
+            title = habit.name,
+            text = "Time for ${habit.name}",
+            extraName = EXTRA_HABIT_ID,
+            extraValue = habit.id,
+        )
+    }
+
+    /** Posts a task reminder. */
+    fun showTask(context: Context, task: TaskEntity) {
+        post(
+            context = context,
+            tag = TAG_TASK,
+            id = task.id.toInt(),
+            title = task.title,
+            text = task.timeMinute?.let { "Due at ${formatClock(it)}" } ?: "Task reminder",
+            extraName = EXTRA_TASK_ID,
+            extraValue = task.id,
+        )
+    }
+
     /**
-     * Posts the reminder. It has no timeout and is never cleared by the app,
+     * Posts a reminder. It has no timeout and is never cleared by the app,
      * so it stays until the user dismisses or opens it (D22).
      */
-    fun show(context: Context, reminder: ReminderEntity, habit: HabitEntity) {
+    private fun post(
+        context: Context,
+        tag: String,
+        id: Int,
+        title: String,
+        text: String,
+        extraName: String,
+        extraValue: Long,
+    ) {
         val allowed = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
             PackageManager.PERMISSION_GRANTED
         if (!allowed) return
 
+        // The action makes habit and task intents distinct even when their ids match.
         val openApp = PendingIntent.getActivity(
             context,
-            habit.id.toInt(),
+            id,
             Intent(context, MainActivity::class.java)
-                .putExtra(EXTRA_HABIT_ID, habit.id)
+                .setAction("com.ticktracker.OPEN_$tag")
+                .putExtra(extraName, extraValue)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(habit.name)
-            .setContentText("Time for ${habit.name}")
+            .setContentTitle(title)
+            .setContentText(text)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setContentIntent(openApp)
             .setAutoCancel(true)
             .build()
 
-        NotificationManagerCompat.from(context).notify(reminder.id.toInt(), notification)
+        NotificationManagerCompat.from(context).notify(tag, id, notification)
     }
 }

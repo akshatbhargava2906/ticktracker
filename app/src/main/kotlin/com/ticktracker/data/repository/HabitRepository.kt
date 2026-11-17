@@ -40,6 +40,9 @@ class HabitRepository(
     /** Which habit belongs to which categories. */
     fun observeCategoryLinks(): Flow<List<HabitCategoryCrossRef>> = categories.observeLinks()
 
+    /** How many reminders exist across all habits. */
+    fun observeReminderCount(): Flow<Int> = reminders.observeCount()
+
     /** Adds the built-in categories (D06). Safe to call on every launch. */
     suspend fun ensureBuiltInCategories() {
         categories.insertAll(BUILT_IN_CATEGORIES.map { CategoryEntity(name = it, builtIn = true) })

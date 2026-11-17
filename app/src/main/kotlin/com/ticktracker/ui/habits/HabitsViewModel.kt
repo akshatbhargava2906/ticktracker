@@ -20,6 +20,7 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -68,6 +69,11 @@ class HabitsViewModel(private val repository: HabitRepository) : ViewModel() {
         val usedCategoryIds = links.map { it.categoryId }.toSet()
         HabitsUiState(cards, categories.filter { it.id in usedCategoryIds })
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HabitsUiState())
+
+    /** True once any habit has a reminder. Decides whether reminder warnings are worth showing. */
+    val hasReminders: StateFlow<Boolean> = repository.observeReminderCount()
+        .map { it > 0 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     /**
      * The tick button. Tapping a completed tick undoes it.

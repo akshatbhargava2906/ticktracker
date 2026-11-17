@@ -16,7 +16,7 @@ Every decision taken for TickTracker, in the order it was made, with the reason 
 | [D01](#d01-three-sections-habits-plan-tasks) | 2026-11-14 | Three sections: Habits, Plan, Tasks | Active |
 | [D02](#d02-all-data-stays-on-the-device) | 2026-11-14 | All data stays on the device | Active |
 | [D03](#d03-build-as-an-installable-web-app) | 2026-11-14 | Build as an installable web app | Superseded by D20 |
-| [D04](#d04-locked-features-of-the-reference-app-are-out-of-scope) | 2026-11-14 | Locked features of the reference app are out of scope | Active |
+| [D04](#d04-locked-features-of-the-reference-app-are-out-of-scope) | 2026-11-14 | Locked features of the reference app are out of scope | Active, amended by D29 |
 | [D05](#d05-habit-model-kind-direction-repeat-goal) | 2026-11-14 | Habit model: kind, direction, repeat goal | Active |
 | [D06](#d06-four-step-add-habit-wizard) | 2026-11-14 | Four-step add habit wizard | Active |
 | [D07](#d07-measurable-habits-unit-daily-target-goal) | 2026-11-14 | Measurable habits: unit, daily target, goal | Active |
@@ -26,7 +26,7 @@ Every decision taken for TickTracker, in the order it was made, with the reason 
 | [D11](#d11-personal-app-nothing-locked) | 2026-11-14 | Personal app, nothing locked | Active |
 | [D12](#d12-tick-habits-are-tapped-measurable-habits-are-typed) | 2026-11-14 | Tick habits are tapped, measurable habits are typed | Active |
 | [D13](#d13-reminders-repeat-daily-weekly-habits-streak-by-week) | 2026-11-14 | Reminders repeat daily; weekly habits streak by week | Active |
-| [D14](#d14-reminder-times-are-chosen-freely) | 2026-11-14 | Reminder times are chosen freely | Active |
+| [D14](#d14-reminder-times-are-chosen-freely) | 2026-11-14 | Reminder times are chosen freely | Active for habits; tasks differ, see D29 |
 | [D15](#d15-reset-undoes-todays-entry) | 2026-11-14 | Reset undoes today's entry | Active |
 | [D16](#d16-entries-are-editable-on-their-own-day-only) | 2026-11-14 | Entries are editable on their own day only | Active |
 | [D17](#d17-a-new-measurable-entry-replaces-the-old-one) | 2026-11-14 | A new measurable entry replaces the old one | Active |
@@ -40,6 +40,9 @@ Every decision taken for TickTracker, in the order it was made, with the reason 
 | [D25](#d25-project-setup) | 2026-11-14 | Project setup: package, SDK levels, structure | Proposed |
 | [D26](#d26-tracking-behaviours-confirmed) | 2026-11-15 | Tracking behaviours confirmed | Active |
 | [D27](#d27-a-habit-can-be-deleted-from-its-card) | 2026-11-15 | A habit can be deleted from its card | Proposed |
+| [D28](#d28-database-changes-never-delete-data) | 2026-11-15 | Database changes never delete data | Active |
+| [D29](#d29-tasks-the-full-task-sheet) | 2026-11-15 | Tasks: the full task sheet | Active |
+| [D30](#d30-what-the-plan-timeline-shows) | 2026-11-15 | What the Plan timeline shows | Active |
 
 ---
 
@@ -360,7 +363,7 @@ The options considered were a normal notification, one that stays until dismisse
 | Room version | Room 2.8, not the newer Room 3 |
 | Library versions | Latest stable releases on 2026-11-14, listed in `gradle/libs.versions.toml` |
 | Reminder storage | Reminders link to habits only, until Plan and Tasks are designed |
-| Database migrations | Not set up yet. Must be added before real data is stored, or an update could wipe it |
+| Database migrations | Not set up at this point. Set up on 2026-11-15, see D28 |
 
 **Reason.** Made by the assistant during scaffolding, to get a building project. API 26 lets the app use the standard date and time classes with no extra library, and covers any phone from 2017 onward. One module and a hand-written container keep a single-person app simple. Room 2.8 was chosen over Room 3 as the long-established version. Compile SDK 37 is required by the current libraries. Not yet confirmed by the owner.
 
@@ -395,13 +398,84 @@ The options considered were a normal notification, one that stays until dismisse
 
 **Effect.** Deleting is permanent: the entries are removed from the database, and the reminders are cancelled with Android.
 
+## D28: Database changes never delete data
+
+**Date:** 2026-11-15 · **Status:** Active
+
+**Decision.** When the structure of the database changes in a new version of the app, the data already on the phone is carried over by a migration. The app never uses Room's "destructive" fallback, which would empty the database instead.
+
+- The structure of every database version is saved as a file in `app/schemas/` and committed.
+- Every structure change raises the database version and comes with a migration: an automatic one for simple changes (a new table, a new column with a default), a hand-written one for anything else.
+- The steps are written at the top of `data/db/Migrations.kt`.
+
+The database is at version 1, the structure the app has had since the skeleton.
+
+**Reason.** The phone holds the only copy of the data (D02). The owner agreed to set this up before logging habits for real. Plan and Tasks will add tables, so structure changes are certain.
+
+**Effect.** Installing a newer build over the app keeps all habits, history and reminders. If a structure change is ever made without a migration, the app fails to open the database and stops, loudly, instead of quietly losing data; the fix is to add the missing migration. Uninstalling the app still deletes everything, which is why export and backup remains an open item.
+
+## D29: Tasks: the full task sheet
+
+**Date:** 2026-11-15 · **Status:** Active · **Amends:** D04, D10, D14
+
+**Decision.** A task is created and edited in a bottom sheet with everything the reference app's task sheet has, including the parts it locks or that were earlier out of scope.
+
+| Field | Behaviour |
+| --- | --- |
+| Title | Typed at the top, beside a circle that ticks the task off. |
+| Date | Any day, or none. A task with no date appears only under All Tasks. Clearing the date also clears the time, reminder and repeat. |
+| Time | Optional time of day. Setting a time on a task with no date gives it today's date. |
+| Reminder | Needs a time first. Choose how early it fires: at the time of the task, or 5, 10, 15, 30 minutes or 1 hour before. It fires once. |
+| Repeat | Never, Daily, Weekly or Monthly. |
+| List | Which list the task belongs to. |
+| Priority | None, Low, Medium or High. |
+| Sub-tasks | A checklist inside the task. Each item is ticked off separately. |
+
+Rules:
+
+- **No save button.** Closing the sheet keeps the changes. A task with no title is not saved. Delete removes the task.
+- **Repeating tasks.** Ticking off a repeating task creates its next occurrence as a new task, with the sub-tasks unticked. The next date is counted from the task's own date, so a weekly task stays on its weekday. If the task was overdue, dates already in the past are skipped. The completed one stays on its day as history. Unticking it and ticking it again does not create a second copy.
+- **Lists.** There is always at least one list; the first is "My Tasks". Lists can be added, renamed and deleted. Deleting a list deletes its tasks. The Timeline shows tasks from every list; All Tasks shows one list at a time.
+- **Task reminders** are not sent once the task is ticked off, and are not sent for a time that has already passed. Tapping one opens the task.
+- **Tasks are not locked by day.** Unlike habit entries (D16), a task can be added to, edited on or ticked off for any day, past or future.
+- **Search** filters both tabs by title.
+
+**Reason.** The owner sent the reference app's task sheet and chose to build all of it, with reminders that fire a chosen time before the task. Repeat is locked as a paid feature in the reference app; here nothing is locked (D11).
+
+**Effect.**
+
+- **Amends D04:** multiple task lists are now in scope.
+- **Amends D14:** a task reminder is tied to the task's time. Habit reminders are unchanged: any time of day, repeating daily.
+- **Amends D10:** a task has at most one reminder, where a habit can have several.
+- The database moves to version 2 with three new tables: task lists, tasks and sub-tasks. Existing habit data is carried over (D28).
+- Task reminders use the same alarm scheduling, restart handling and stay-until-dismissed notifications as habits (D20, D22).
+- A task stores a duration, unused in the Tasks section, so that it can be drawn as a block on the Plan timeline (D30).
+
+## D30: What the Plan timeline shows
+
+**Date:** 2026-11-15 · **Status:** Active
+
+**Decision.** The Plan timeline for a day shows three kinds of item:
+
+1. **Blocks** added with "Plan this slot".
+2. **Tasks that have a time** on that day. Ticking one on the timeline ticks it in Tasks too.
+3. **Habits at their reminder times.** A habit with an 18:00 reminder appears at 6:00 PM, and can be ticked from there.
+
+The day's start time and the "Wind down" time are settings, with defaults of 7:00 AM and 10:00 PM.
+
+The "Plan this slot" sheet asks for a title, a date, a start time and a duration, and what the item is: a **Task** (tracked and ticked off on the Plan only), a **Note** (just a record of what was done, with nothing to tick), or a **Task in my list** (also added to the Tasks section).
+
+**Reason.** Chosen by the owner from the reference app's Plan screen, where the habit "10k" appears as a block at its reminder time.
+
+**Effect.** Plan is a view across all three sections, not a separate silo: it reads tasks and habits as well as its own blocks. A settings screen is needed for the day's start and wind-down times. Plan is not built yet.
+
 ---
 
 ## Open items
 
 Not yet decided. Each becomes a numbered decision when settled.
 
-- Add flows for Plan blocks and Tasks, including how their reminders are set.
+- Plan: reminders for blocks, how long a habit's block is on the timeline, and what happens when items overlap.
 - Data export and backup, since data is device-only (D02).
 - Light theme, or dark only.
 - Editing a habit after it is created: what can be changed, and what happens to its history.
