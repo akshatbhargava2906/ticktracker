@@ -16,7 +16,7 @@ TickTracker runs entirely on the phone. There is no account and no server: every
 
 ## How it is built
 
-A native Android app written in Kotlin with Jetpack Compose, storing its data in an on-device database. Dark theme only.
+A native Android app written in Kotlin with Jetpack Compose, storing its data in an on-device database. Light and dark themes.
 
 ## Documentation
 

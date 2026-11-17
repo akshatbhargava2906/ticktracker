@@ -1,5 +1,6 @@
 package com.ticktracker.ui.habits.add
 
+import com.ticktracker.ui.theme.TextPrimary
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -268,7 +269,7 @@ fun NameStep(state: AddHabitState, viewModel: AddHabitViewModel) {
                 Box(
                     Modifier
                         .size(34.dp)
-                        .border(2.dp, if (selected) Color.White else Color.Transparent, CircleShape)
+                        .border(2.dp, if (selected) TextPrimary else Color.Transparent, CircleShape)
                         .padding(if (selected) 4.dp else 0.dp)
                         .clip(CircleShape)
                         .background(Color(color))

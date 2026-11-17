@@ -1,5 +1,7 @@
 package com.ticktracker.ui.tasks
 
+import com.ticktracker.ui.theme.RaisedSurface
+import com.ticktracker.ui.theme.AppBackground
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -74,7 +76,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-private val SheetCard = Color(0xFF0E0E0E)
 
 /** Which of the sheet's pickers is open. */
 private enum class Picker { DATE, TIME, REMINDER, REPEAT, LIST, PRIORITY }
@@ -142,7 +143,7 @@ fun TaskSheet(
 
             Surface(
                 shape = RoundedCornerShape(18.dp),
-                color = SheetCard,
+                color = AppBackground,
                 modifier = Modifier.padding(top = 8.dp),
             ) {
                 Column(Modifier.padding(vertical = 2.dp)) {
@@ -340,7 +341,7 @@ private fun SettingRow(
             modifier = Modifier
                 .size(32.dp)
                 .background(
-                    color = if (highlighted) green.copy(alpha = 0.16f) else Color(0xFF242424),
+                    color = if (highlighted) green.copy(alpha = 0.16f) else RaisedSurface,
                     shape = RoundedCornerShape(10.dp),
                 ),
             contentAlignment = Alignment.Center,
@@ -375,7 +376,7 @@ private fun SettingRow(
                     contentDescription = "Clear $label",
                     tint = TextMuted,
                     modifier = Modifier
-                        .background(Color(0xFF242424), CircleShape)
+                        .background(RaisedSurface, CircleShape)
                         .padding(4.dp)
                         .size(16.dp),
                 )
@@ -404,7 +405,7 @@ private fun SubtasksCard(subtasks: List<SubtaskDraft>, onChange: (List<SubtaskDr
 
     Surface(
         shape = RoundedCornerShape(18.dp),
-        color = SheetCard,
+        color = AppBackground,
         modifier = Modifier.padding(top = 8.dp),
     ) {
         Column(Modifier.padding(start = 12.dp, end = 4.dp, top = 10.dp, bottom = 2.dp)) {

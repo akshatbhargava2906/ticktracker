@@ -38,7 +38,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ticktracker.BuildConfig
+import com.ticktracker.data.settings.ThemeMode
 import com.ticktracker.ui.habits.ReminderHealthBanner
+import com.ticktracker.ui.tasks.OptionsDialog
 import com.ticktracker.ui.theme.CardOutline
 import com.ticktracker.ui.theme.CardSurface
 import com.ticktracker.ui.theme.TextMuted
@@ -77,6 +79,10 @@ fun SettingsScreen(
         }
 
         ReminderHealthBanner(Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+
+        Section("Appearance") {
+            SettingRow("Theme", settings.themeMode.label) { editing = "theme" }
+        }
 
         Section("Plan") {
             SettingRow("Day starts at", formatClock(settings.dayStartMinute)) { editing = "start" }
@@ -117,6 +123,17 @@ fun SettingsScreen(
     }
 
     when (editing) {
+        "theme" -> OptionsDialog(
+            title = "Theme",
+            options = ThemeMode.entries,
+            selected = settings.themeMode,
+            label = { it.label },
+            onDismiss = { editing = null },
+            onSelect = {
+                viewModel.setThemeMode(it)
+                editing = null
+            },
+        )
         "start" -> TimeDialog("Day starts at", settings.dayStartMinute, onDismiss = { editing = null }) {
             timeError = if (viewModel.setDayStart(it)) null else "The day must start before wind down."
             editing = null

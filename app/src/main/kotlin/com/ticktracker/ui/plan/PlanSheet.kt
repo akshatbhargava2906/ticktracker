@@ -1,5 +1,6 @@
 package com.ticktracker.ui.plan
 
+import com.ticktracker.ui.theme.RaisedSurface
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -340,7 +341,7 @@ private fun FieldButton(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        color = Color(0xFF232323),
+        color = RaisedSurface,
         border = BorderStroke(1.dp, CardOutline),
         onClick = onClick,
     ) {

@@ -46,12 +46,13 @@ Every decision taken for TickTracker, in the order it was made, with the reason 
 | [D31](#d31-editing-a-habit) | 2026-11-17 | Editing a habit | Active |
 | [D32](#d32-plan-details) | 2026-11-17 | Plan details: habit blocks, block reminders, overlaps | Active, point 1 superseded by D35 |
 | [D33](#d33-backup-to-a-file) | 2026-11-17 | Backup to a file | Active |
-| [D34](#d34-dark-theme-only) | 2026-11-17 | Dark theme only | Active |
+| [D34](#d34-dark-theme-only) | 2026-11-17 | Dark theme only | Superseded by D40 |
 | [D35](#d35-the-plan-is-for-day-planning-only) | 2026-11-17 | The Plan is for day planning only | Active |
 | [D36](#d36-tasks-planned-on-the-plan-are-real-tasks) | 2026-11-17 | Tasks planned on the Plan are real tasks | Active |
 | [D37](#d37-the-tasks-timeline-covers-a-week-back-and-a-year-ahead) | 2026-11-17 | The Tasks timeline covers a week back and a year ahead | Active |
 | [D38](#d38-compact-cards-and-smaller-text) | 2026-11-17 | Compact cards and smaller text | Active |
 | [D39](#d39-plus-jakarta-sans-and-tighter-spacing) | 2026-11-17 | Plus Jakarta Sans and tighter spacing | Active |
+| [D40](#d40-new-icon-60-30-10-theme-and-light-mode) | 2026-11-17 | New icon, 60-30-10 theme, and light mode | Active |
 
 ---
 
@@ -535,7 +536,7 @@ The "Plan this slot" sheet asks for a title, a date, a start time and a duration
 
 ## D34: Dark theme only
 
-**Date:** 2026-11-17 · **Status:** Active
+**Date:** 2026-11-17 · **Status:** Superseded by [D40](#d40-new-icon-60-30-10-theme-and-light-mode)
 
 **Decision.** The app has a dark theme only, with the green accent (D01). There is no light theme and no theme setting.
 
@@ -610,6 +611,32 @@ The "Plan this slot" sheet asks for a title, a date, a start time and a duration
 **Reason.** The owner found the Tasks section overwhelming and asked for Plus Jakarta Sans throughout, with a compact, cohesive layout.
 
 **Effect.** The font's licence (SIL Open Font License 1.1) allows bundling; a copy is kept in `licenses/`. The app grows by about 0.5 MB for the font files.
+
+## D40: New icon, 60-30-10 theme, and light mode
+
+**Date:** 2026-11-17 · **Status:** Active · **Supersedes:** D34 · **Amends:** D01 (green accent)
+
+**Decision.**
+
+- **Icon:** the launcher icon is the owner's TickTracker logo, redrawn as a vector: a white circular arrow and a bold white tick on a blue gradient. The logo's "TickTracker" wording is left off, since the launcher shows the app's name under the icon. On Android 13 and later it also works as a themed (monochrome) icon.
+- **Theme:** colours follow the 60-30-10 rule, in both a dark and a light version:
+
+| Share | Role | Dark | Light |
+| --- | --- | --- | --- |
+| 60% | Background | Deep charcoal `#14161A` | Soft off-white `#F2F3F5` |
+| 30% | Cards, sheets, navigation | `#1D2026`, controls `#282C34`, lines `#2F343D` | `#FAFAFB`, controls `#E7E9EC`, lines `#DADDE2` |
+| 10% | Accent: buttons, selection, key highlights | Blue `#4C8DF6` | Blue `#2B6FE0` |
+
+  Text is `#E6E8EB` / muted `#9198A1` on dark, and `#1C1F24` / muted `#68707B` on light. Nothing uses pure white or pure black as a background or for text. The accent is the logo's blue and replaces the earlier green.
+- **Light mode:** Settings has an Appearance section with a Theme choice: Light, Dark, or Same as phone. The default is Dark, as before. The choice is included in backups.
+
+**Reason.** The owner supplied the logo and the 60-30-10 rule, and asked for a light mode.
+
+**Effect.**
+
+- Every colour in the app now comes from the theme, so both themes apply everywhere, including the status bar icons and the launch screen.
+- Colours that carry meaning are unchanged: habit colours chosen by the user, red for a slipped day or overdue task, and the priority colours.
+- Text on a coloured fill, such as a done habit button, stays white for contrast in both themes.
 
 ---
 

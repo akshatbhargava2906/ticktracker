@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="app_background">#0B0B0B</color>
-    <color name="accent_green">#53C672</color>
+    <!-- The window colour for the instant before the app draws: the light theme's background.
+         values-night holds the dark one. Matches ui/theme/Theme.kt (D40). -->
+    <color name="app_background">#F2F3F5</color>
 </resources>

@@ -1,13 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    App icon (D40), redrawn from the logo: a circular arrow sweeping up the left and over the
+    top, ending in an arrowhead at the upper right, with a bold tick across it.
+    Drawn within the central 66 of 108 units, the area every launcher shape keeps visible.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- The circular arrow: from the bottom, clockwise up the left and over the top. -->
     <path
-        android:pathData="M36,56 L48,68 L72,42"
-        android:strokeColor="#0B0B0B"
-        android:strokeWidth="8"
+        android:pathData="M46.82,73.73 A21,21 0 0,1 59.43,33.72"
+        android:strokeColor="#F2FFFFFF"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round" />
+
+    <!-- Its arrowhead. -->
+    <path
+        android:pathData="M65.9,35.5 L56.5,38.7 L59.4,28 Z"
+        android:fillColor="#F2FFFFFF" />
+
+    <!-- A blue edge around the tick, so it reads as lying over the arrow. -->
+    <path
+        android:pathData="M40,54 L50.5,64.5 L75,37"
+        android:strokeColor="#FF2F74E2"
+        android:strokeWidth="13"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- The tick. -->
+    <path
+        android:pathData="M40,54 L50.5,64.5 L75,37"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="7.5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 </vector>

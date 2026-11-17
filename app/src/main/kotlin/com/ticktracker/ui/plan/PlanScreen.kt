@@ -1,5 +1,7 @@
 package com.ticktracker.ui.plan
 
+import com.ticktracker.ui.theme.RaisedSurface
+import com.ticktracker.ui.theme.CardSurface
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -249,7 +251,7 @@ private fun WeekStrip(selected: LocalDate, today: LocalDate, onSelect: (LocalDat
             Surface(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(16.dp),
-                color = if (isSelected) green else Color(0xFF181818),
+                color = if (isSelected) green else CardSurface,
                 border = if (day == today && !isSelected) BorderStroke(1.dp, green) else null,
                 onClick = { onSelect(day) },
             ) {
@@ -354,7 +356,7 @@ private fun WindDownRow(minute: Int) {
     TimelineRow(
         time = formatClock(minute),
         minHeight = 52.dp,
-        marker = { Pill(color = Color(0xFF2A2A2A), height = 40.dp) { Text("🌙") } },
+        marker = { Pill(color = RaisedSurface, height = 40.dp) { Text("🌙") } },
     ) {
         Text(
             "Wind down",
@@ -385,8 +387,8 @@ private fun ItemRow(item: PlanItem, start: Int, end: Int, onToggle: () -> Unit, 
 
     val (pillColor, iconTint) = when (item) {
         is PlanItem.Block ->
-            if (item.block.kind == BlockKind.NOTE) Color(0xFF2A2A2A) to TextMuted else green to Color.White
-        is PlanItem.Task -> Color(0xFF2E5B8A) to Color.White
+            if (item.block.kind == BlockKind.NOTE) RaisedSurface to TextMuted else green to MaterialTheme.colorScheme.onPrimary
+        is PlanItem.Task -> green to MaterialTheme.colorScheme.onPrimary
     }
     val done = when (item) {
         is PlanItem.Block -> item.block.completed

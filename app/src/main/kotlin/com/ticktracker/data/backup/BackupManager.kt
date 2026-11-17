@@ -22,6 +22,7 @@ import com.ticktracker.data.model.TaskRepeat
 import com.ticktracker.data.repository.TaskRepository
 import com.ticktracker.data.settings.AppSettings
 import com.ticktracker.data.settings.SettingsStore
+import com.ticktracker.data.settings.ThemeMode
 import com.ticktracker.reminders.ReminderScheduler
 import java.io.InputStream
 import java.io.OutputStream
@@ -87,7 +88,8 @@ class BackupManager(
             .put("exportedAt", System.currentTimeMillis())
             .put("settings", JSONObject()
                 .put("dayStartMinute", snapshot.settings.dayStartMinute)
-                .put("windDownMinute", snapshot.settings.windDownMinute))
+                .put("windDownMinute", snapshot.settings.windDownMinute)
+                .put("themeMode", snapshot.settings.themeMode.name))
             .put("categories", snapshot.categories.toJsonArray {
                 JSONObject().put("id", it.id).put("name", it.name).put("builtIn", it.builtIn)
             })
@@ -197,6 +199,10 @@ class BackupManager(
                         ?: AppSettings.DEFAULT_DAY_START,
                     windDownMinute = settingsJson?.optInt("windDownMinute", AppSettings.DEFAULT_WIND_DOWN)
                         ?: AppSettings.DEFAULT_WIND_DOWN,
+                    // Backups made before the theme setting existed keep the current theme.
+                    themeMode = settingsJson?.optString("themeMode")
+                        ?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } }
+                        ?: settings.settings.value.themeMode,
                 ),
                 categories = root.array("categories").map {
                     CategoryEntity(id = it.getLong("id"), name = it.getString("name"), builtIn = it.getBoolean("builtIn"))

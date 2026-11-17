@@ -1,5 +1,6 @@
 package com.ticktracker.ui.habits.cards
 
+import com.ticktracker.ui.theme.TextPrimary
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -56,7 +57,7 @@ fun WeeklyCard(card: HabitCardState, onDelete: () -> Unit, onEdit: () -> Unit) {
                     Text(
                         text = label,
                         fontSize = 12.sp,
-                        color = if (isToday) Color.White else TextMuted,
+                        color = if (isToday) TextPrimary else TextMuted,
                         fontWeight = if (isToday) FontWeight.SemiBold else FontWeight.Normal,
                     )
                     Box(
@@ -73,7 +74,7 @@ fun WeeklyCard(card: HabitCardState, onDelete: () -> Unit, onEdit: () -> Unit) {
                                 },
                                 shape = shape,
                             )
-                            .then(if (isToday) Modifier.border(2.dp, Color.White, shape) else Modifier),
+                            .then(if (isToday) Modifier.border(2.dp, TextPrimary, shape) else Modifier),
                     )
                 }
             }

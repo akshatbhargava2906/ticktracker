@@ -1,5 +1,9 @@
 package com.ticktracker.ui.habits.cards
 
+import com.ticktracker.ui.theme.TextMuted
+import com.ticktracker.ui.theme.TextPrimary
+import com.ticktracker.ui.theme.CardOutline
+import com.ticktracker.ui.theme.RaisedSurface
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,7 +46,6 @@ import com.ticktracker.ui.theme.CardSurface
 /** Colour for a slipped day on a Quit habit. */
 val SlippedRed = Color(0xFFE5484D)
 
-private val IdleButton = Color(0xFF2A2A2A)
 
 /** The rounded card every habit sits in, outlined faintly in the habit colour. */
 @Composable
@@ -158,8 +161,8 @@ fun ActionButton(
             .padding(start = 6.dp)
             .size(42.dp),
         shape = RoundedCornerShape(13.dp),
-        color = if (active) activeColor else IdleButton,
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
+        color = if (active) activeColor else RaisedSurface,
+        border = BorderStroke(1.dp, CardOutline),
         enabled = enabled,
         onClick = onClick,
     ) {
@@ -167,8 +170,8 @@ fun ActionButton(
             content(
                 when {
                     active -> Color.White
-                    enabled -> Color(0xFFBDBDBD)
-                    else -> Color(0xFF5A5A5A)
+                    enabled -> TextPrimary.copy(alpha = 0.75f)
+                    else -> TextMuted.copy(alpha = 0.4f)
                 },
             )
         }

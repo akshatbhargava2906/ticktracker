@@ -1,5 +1,6 @@
 package com.ticktracker.ui.habits.cards
 
+import com.ticktracker.ui.theme.TextPrimary
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -183,7 +184,7 @@ private fun GridCell(
             // to fit its number and unit instead of cutting them off.
             .heightIn(min = 30.dp)
             .background(background, shape)
-            .then(if (outlined) Modifier.border(1.5.dp, Color.White.copy(alpha = 0.8f), shape) else Modifier),
+            .then(if (outlined) Modifier.border(1.5.dp, TextPrimary.copy(alpha = 0.8f), shape) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         if (value != null) {

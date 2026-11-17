@@ -17,6 +17,7 @@ import com.ticktracker.data.backup.BackupManager
 import com.ticktracker.data.backup.BackupSummary
 import com.ticktracker.data.settings.AppSettings
 import com.ticktracker.data.settings.SettingsStore
+import com.ticktracker.data.settings.ThemeMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -37,6 +38,8 @@ class SettingsViewModel(
 
     var busy by mutableStateOf(false)
         private set
+
+    fun setThemeMode(mode: ThemeMode) = store.setThemeMode(mode)
 
     /** Returns false, and changes nothing, if the time is not before wind down. */
     fun setDayStart(minute: Int): Boolean {

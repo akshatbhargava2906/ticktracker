@@ -1,5 +1,6 @@
 package com.ticktracker.ui.tasks
 
+import com.ticktracker.ui.theme.AppBackground
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Arrangement
@@ -114,6 +115,8 @@ private fun DaySection(
     val hasTasks = tasks.isNotEmpty()
     // Empty days are a single quiet line; days with tasks, and today, get the full section.
     val expanded = hasTasks || isToday
+    val lineColor = CardOutline
+    val holeColor = AppBackground
 
     Column(
         modifier = Modifier
@@ -122,11 +125,11 @@ private fun DaySection(
             .drawBehind {
                 val x = 6.dp.toPx()
                 val dotY = (HEADING_HEIGHT / 2).toPx()
-                drawLine(CardOutline, Offset(x, 0f), Offset(x, size.height), strokeWidth = 1.5.dp.toPx())
+                drawLine(lineColor, Offset(x, 0f), Offset(x, size.height), strokeWidth = 1.5.dp.toPx())
                 when {
                     isToday -> drawCircle(green, radius = 6.dp.toPx(), center = Offset(x, dotY))
                     hasTasks -> {
-                        drawCircle(Color(0xFF0B0B0B), radius = 5.dp.toPx(), center = Offset(x, dotY))
+                        drawCircle(holeColor, radius = 5.dp.toPx(), center = Offset(x, dotY))
                         drawCircle(
                             green.copy(alpha = 0.7f),
                             radius = 5.dp.toPx(),
@@ -134,7 +137,7 @@ private fun DaySection(
                             style = Stroke(1.5.dp.toPx()),
                         )
                     }
-                    else -> drawCircle(CardOutline, radius = 3.dp.toPx(), center = Offset(x, dotY))
+                    else -> drawCircle(lineColor, radius = 3.dp.toPx(), center = Offset(x, dotY))
                 }
             }
             .padding(start = 22.dp, bottom = if (expanded) 10.dp else 0.dp),

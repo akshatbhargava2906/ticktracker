@@ -2,16 +2,21 @@ package com.ticktracker
 
 import android.content.Intent
 import android.os.Bundle
+import android.graphics.Color
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ticktracker.reminders.ReminderNotifications
 import com.ticktracker.ui.AppRoot
 import com.ticktracker.ui.OpenTarget
 import com.ticktracker.ui.theme.TickTrackerTheme
+import com.ticktracker.ui.theme.isDarkTheme
 import kotlinx.coroutines.launch
 
 /** The only activity. Every screen is a Compose destination inside [AppRoot]. */
@@ -24,8 +29,21 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         // Only on a fresh start: after a rotation the same intent must not reopen the item.
         if (savedInstanceState == null) openTarget = targetFrom(intent)
+        val settingsStore = (application as TickTrackerApp).container.settingsStore
         setContent {
-            TickTrackerTheme {
+            val settings by settingsStore.settings.collectAsStateWithLifecycle()
+            val dark = isDarkTheme(settings.themeMode)
+            // Status and navigation bar icons follow the app's theme, not only the phone's.
+            DisposableEffect(dark) {
+                val style = if (dark) {
+                    SystemBarStyle.dark(Color.TRANSPARENT)
+                } else {
+                    SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+                }
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+                onDispose { }
+            }
+            TickTrackerTheme(dark = dark) {
                 AppRoot(
                     openTarget = openTarget,
                     onTargetOpened = { openTarget = null },

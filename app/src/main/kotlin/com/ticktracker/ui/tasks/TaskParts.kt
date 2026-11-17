@@ -1,5 +1,6 @@
 package com.ticktracker.ui.tasks
 
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
@@ -45,6 +46,8 @@ import com.ticktracker.util.relativeDate
 import java.time.LocalDate
 
 /** The colour that marks a priority. */
+@Composable
+@ReadOnlyComposable
 fun priorityColor(priority: TaskPriority): Color = when (priority) {
     TaskPriority.HIGH -> Color(0xFFE5484D)
     TaskPriority.MEDIUM -> Color(0xFFFFB74D)
@@ -61,7 +64,7 @@ fun CheckCircle(checked: Boolean, onClick: () -> Unit, modifier: Modifier = Modi
             .size(size)
             .clip(CircleShape)
             .background(if (checked) colors.primary else Color.Transparent)
-            .border(1.5.dp, if (checked) colors.primary else Color(0xFF6E6E6E), CircleShape)
+            .border(1.5.dp, if (checked) colors.primary else TextMuted, CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {

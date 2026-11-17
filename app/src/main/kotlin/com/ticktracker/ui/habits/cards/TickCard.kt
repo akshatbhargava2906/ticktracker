@@ -1,5 +1,6 @@
 package com.ticktracker.ui.habits.cards
 
+import com.ticktracker.ui.theme.TextPrimary
 import com.ticktracker.ui.theme.PlusJakartaSans
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -104,6 +105,7 @@ private fun Heatmap(card: HabitCardState, modifier: Modifier = Modifier) {
     val habit = card.habit
     val textMeasurer = rememberTextMeasurer()
     val labelStyle = TextStyle(fontSize = 10.sp, color = TextMuted, fontFamily = PlusJakartaSans)
+    val todayOutline = TextPrimary
 
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val labelWidth = 16.dp
@@ -144,7 +146,7 @@ private fun Heatmap(card: HabitCardState, modifier: Modifier = Modifier) {
                     val size = Size(cellPx, cellPx)
                     drawRoundRect(dayCellColor(habit, card.entries[date]), topLeft, size, corner)
                     if (date == card.today) {
-                        drawRoundRect(Color.White, topLeft, size, corner, style = Stroke(1.5.dp.toPx()))
+                        drawRoundRect(todayOutline, topLeft, size, corner, style = Stroke(1.5.dp.toPx()))
                     }
                 }
             }

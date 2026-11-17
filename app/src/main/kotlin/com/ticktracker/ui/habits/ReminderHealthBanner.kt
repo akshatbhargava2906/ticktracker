@@ -1,5 +1,6 @@
 package com.ticktracker.ui.habits
 
+import com.ticktracker.ui.theme.Palette
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -27,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.ticktracker.reminders.ReminderHealth
 
-private val WarningAmber = Color(0xFFFFB74D)
 
 /**
  * Warns when a phone setting could delay or block reminders, with a button to fix each one (D20).
@@ -47,13 +47,13 @@ fun ReminderHealthBanner(modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        color = WarningAmber.copy(alpha = 0.08f),
-        border = BorderStroke(1.dp, WarningAmber.copy(alpha = 0.5f)),
+        color = Palette.warning.copy(alpha = 0.08f),
+        border = BorderStroke(1.dp, Palette.warning.copy(alpha = 0.5f)),
     ) {
         Column(Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 4.dp)) {
             Text(
                 text = "Reminders may not arrive",
-                color = WarningAmber,
+                color = Palette.warning,
                 fontWeight = FontWeight.SemiBold,
             )
             if (!health.notificationsAllowed) {
