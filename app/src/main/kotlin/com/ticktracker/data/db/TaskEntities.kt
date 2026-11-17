@@ -121,6 +121,9 @@ interface TaskDao {
     @Query("DELETE FROM subtasks WHERE taskId = :taskId")
     suspend fun deleteSubtasks(taskId: Long)
 
+    @Query("SELECT * FROM task_lists ORDER BY id")
+    suspend fun getLists(): List<TaskListEntity>
+
     @Query("SELECT COUNT(*) FROM task_lists")
     suspend fun listCount(): Int
 

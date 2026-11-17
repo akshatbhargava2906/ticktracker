@@ -4,7 +4,7 @@ What every file in the project is for, and where it sits in the app's flow. Read
 
 **Keep this file current.** When a file is added, removed or changes its job, update its entry here.
 
-The Habits and Tasks sections are built. Plan is still a placeholder. Each entry is marked:
+Every section is built: Habits, Tasks, Plan and Settings. Each entry is marked:
 
 - **Working**: does its job.
 - **Works on the phone**: confirmed working by the owner on their phone.
@@ -88,6 +88,18 @@ The steps are the ones in [flow_state.md section 7](flow_state.md#7-tasks).
 | Task reminder is tapped | `MainActivity.kt` reads the task's id → `AppRoot.kt` goes to the Tasks section → `TasksScreen.kt` opens the task in `TaskSheet.kt` |
 | Phone restarts, or app is opened | `ReminderScheduler.rescheduleAll()` re-registers task reminders along with habit reminders |
 
+## Where each step of the Plan, editing and backup flows lives
+
+| Step in the flow | Files involved |
+| --- | --- |
+| Plan section is shown | `ui/AppRoot.kt` → `ui/plan/PlanScreen.kt` ← `PlanViewModel.kt`, which gathers blocks (`PlanRepository`), timed tasks (`TaskRepository`) and the day's times (`SettingsStore`) |
+| Gaps, wind down and the now marker are worked out | `domain/PlanLayout.kt` `layoutDay()` |
+| A slot is planned | `PlanScreen.kt` opens `PlanSheet.kt` → `PlanViewModel.save()` → `TaskRepository.saveTask()` for a Task, or `PlanRepository.saveBlock()` for a Note (D36) |
+| Tasks planned before D36 are converted | `TickTrackerApp.kt` at start-up, and `BackupManager.import()` after a restore → `TaskRepository.convertTaskBlocks()` |
+| A habit is edited | Card menu (`CardParts.kt`) → `HabitsScreen.kt` → `AppRoot.kt` route `edit-habit/{id}` → `add/AddHabitScreen.kt` with `AddHabitViewModel` in edit mode → `HabitRepository.updateHabit()` |
+| Settings are changed | Header button in `AppRoot.kt` → `ui/settings/SettingsScreen.kt` → `SettingsViewModel.kt` → `data/settings/SettingsStore.kt` |
+| Data is exported or imported | `SettingsScreen.kt` file picker → `SettingsViewModel.export()` / `import()` → `data/backup/BackupManager.kt` → `BackupDao` |
+
 ## Project root
 
 | File | What it does |
@@ -105,8 +117,8 @@ The steps are the ones in [flow_state.md section 7](flow_state.md#7-tasks).
 
 | File | What it does |
 | --- | --- |
-| `app/build.gradle.kts` | Build settings for the app: package name `com.ticktracker`, SDK levels (minimum 26, target 36, compiled against 37), version, and the libraries it uses. |
-| `app/schemas/com.ticktracker.data.db.AppDatabase/1.json`, `2.json` | The structure of each database version, written by the build. Version 1 is habits; version 2 adds tasks. Room uses these files to generate and check upgrades between versions. One file is added per version; existing ones are never edited or deleted. Committed. (D28) |
+| `app/build.gradle.kts` | Build settings for the app: package name `com.ticktracker`, SDK levels (minimum 26, target 36, compiled against 37), version, the libraries it uses, and where Room writes its schema files. |
+| `app/schemas/com.ticktracker.data.db.AppDatabase/1.json`, `2.json`, `3.json` | The structure of each database version, written by the build. Version 1 is habits; 2 adds tasks; 3 adds Plan blocks. Room uses these files to generate and check upgrades between versions. One file is added per version; existing ones are never edited or deleted. Committed. (D28) |
 | `app/src/main/AndroidManifest.xml` | Tells Android what the app contains: its permissions (notifications, exact alarms, start on boot), the one activity, and the two reminder receivers. |
 
 ## `app/src/main/kotlin/com/ticktracker/`
@@ -115,8 +127,8 @@ The steps are the ones in [flow_state.md section 7](flow_state.md#7-tasks).
 
 | File | Status | What it does |
 | --- | --- | --- |
-| `TickTrackerApp.kt` | Works on the phone | First code to run. Builds `AppContainer` (the database, the reminder scheduler and the repository), creates the notification channel, and adds the built-in categories. Also runs when Android wakes the app for a reminder, which is why receivers can reach the database. |
-| `MainActivity.kt` | Untested on a phone | The only activity. Applies the theme and shows `AppRoot`. When opened by tapping a reminder, it passes on which habit or task to show. Re-registers all reminders each time the app comes to the front. |
+| `TickTrackerApp.kt` | Works on the phone | First code to run. Builds `AppContainer`: the database, the settings, the reminder scheduler, the habit, task and Plan repositories, and the backup manager. Creates the notification channel, the built-in categories and the first task list. Also runs when Android wakes the app for a reminder, which is why receivers can reach the database. |
+| `MainActivity.kt` | Untested on a phone | The only activity. Applies the theme and shows `AppRoot`. When opened by tapping a reminder, it passes on which habit, task or Plan block to show. Re-registers all reminders each time the app comes to the front. |
 
 ### `data/model/`
 
@@ -130,68 +142,83 @@ The steps are the ones in [flow_state.md section 7](flow_state.md#7-tasks).
 | File | Status | What it does |
 | --- | --- | --- |
 | `Entities.kt` | Untested on a phone | The database tables. `HabitEntity` is a habit. `HabitEntryEntity` is what was logged for one habit on one day, at most one row per day (D17). `CategoryEntity` and `HabitCategoryCrossRef` give a habit several categories (D09). `ReminderEntity` is one daily reminder time for a habit (D10). |
-| `Daos.kt` | Works on the phone | The database queries for habits, one interface per table: `HabitDao`, `HabitEntryDao`, `CategoryDao`, `ReminderDao`. |
+| `Daos.kt` | Works on the phone | The database queries for habits, one interface per table: `HabitDao`, `HabitEntryDao`, `CategoryDao`, `ReminderDao`. Includes the queries for editing a habit. |
 | `TaskEntities.kt` | Untested on a phone | The Tasks tables and their queries: `TaskListEntity` (a list such as "My Tasks"), `TaskEntity` (a task with its date, time, reminder, repeat, priority and done state), `SubtaskEntity` (a checklist item), and `TaskDao`. (D29) |
-| `AppDatabase.kt` | Untested on a phone | Ties the tables and queries into one Room database file, `ticktracker.db`. Holds the database version number (now 2) and the list of automatic upgrades between versions. `Converters` stores dates as day numbers. |
+| `AppDatabase.kt` | Untested on a phone | Ties the tables and queries into one Room database file, `ticktracker.db`. Holds the database version number (now 3) and the list of automatic upgrades between versions. `Converters` stores dates as day numbers. |
+| `PlanEntities.kt` | Untested on a phone | The Plan blocks table, `PlanBlockEntity` (title, day, start, length, kind), and `PlanDao`. Blocks are only notes now; kind Task is kept to read older data, which is converted into tasks (D36). |
+| `BackupDao.kt` | Untested on a phone | Reads every table, clears every table and inserts rows with their ids kept, for backup and restore. (D33) |
 | `Migrations.kt` | Working | The list of hand-written database upgrades (empty so far), and the steps to follow whenever a table changes, so that data on the phone is carried over and never deleted (D28). |
 
 ### `data/repository/`
 
 | File | Status | What it does |
 | --- | --- | --- |
-| `HabitRepository.kt` | Works on the phone | The only way screens read or change habit data. Creates and deletes habits, and logs today's entry. Its logging functions take no date, so they can only ever write to today; that is how the today-only rule is enforced (D16). Tells `ReminderScheduler` when reminders are added or removed. |
-| `TaskRepository.kt` | Untested on a phone | The only way screens read or change tasks, lists and sub-tasks. Saves a task from the sheet (`TaskDraft`), ticks tasks off and creates the next occurrence of a repeating one, manages lists, and keeps each task's reminder in step with it. (D29) |
+| `HabitRepository.kt` | Works on the phone | The only way screens read or change habit data. Creates, edits (`updateHabit`, D31) and deletes habits, and logs today's entry, including the tap logic (`tapTick`, `toggleTodayState`) used by the cards. Its logging functions take no date, so they can only ever write to today (D16). Tells `ReminderScheduler` when reminders change. |
+| `TaskRepository.kt` | Untested on a phone | The only way screens read or change tasks, lists and sub-tasks. Saves a task from either sheet (`TaskDraft`), ticks tasks off and creates the next occurrence of a repeating one, manages lists, keeps each task's reminder in step, and converts tasks planned before D36 from Plan blocks into real tasks. (D29, D36) |
+| `PlanRepository.kt` | Untested on a phone | The only way screens read or change Plan blocks: save, tick off, delete, each keeping the block's reminder in step. (D30) |
+
+### `data/settings/` and `data/backup/`
+
+| File | Status | What it does |
+| --- | --- | --- |
+| `settings/SettingsStore.kt` | Untested on a phone | Keeps the settings (the Plan day's start and wind-down times) on the phone, and lets screens follow them as they change. (D30) |
+| `backup/BackupManager.kt` | Untested on a phone | Writes everything to a JSON file, and restores from one: reads and checks the whole file first, then replaces every table and the settings, and resets all reminders. (D33) |
 
 ### `domain/`
 
 | File | Status | What it does |
 | --- | --- | --- |
 | `HabitProgress.kt` | Working, unit tested | The tracking rules: whether a day or a week counts for a habit, the streak in days or weeks, and the week's progress text. No Android code. (D13, D26) |
-| `TaskRules.kt` | Working, unit tested | The task rules: the next date of a repeating task, when a task's reminder fires, and the reminder choices. No Android code. (D29) |
+| `TaskRules.kt` | Working, unit tested | The task rules: the next date of a repeating task, when a task's or a Plan block's one-off reminder fires, and the reminder choices. No Android code. (D29, D32) |
+| `PlanLayout.kt` | Working, unit tested | `layoutDay()`: turns a day's items into timeline rows, adding the gaps, the Wind down row and the now marker. No Android code. (D32) |
 
 ### `reminders/`
 
 | File | Status | What it does |
 | --- | --- | --- |
 | `ReminderTime.kt` | Working, unit tested | `nextOccurrence()`: works out when a daily reminder should next fire, today or tomorrow. |
-| `ReminderScheduler.kt` | Habit part works on the phone; task part untested | Registers and cancels alarms with Android's `AlarmManager`: daily ones for habit reminders, one-off ones for task reminders. Re-registers all of them after a restart. (D20, D29) |
-| `ReminderReceiver.kt` | Habit part works on the phone; task part untested | Android runs this when a reminder is due, with the app open or closed. For a habit it shows the notification, then schedules the same reminder for tomorrow. For a task it shows the notification once, unless the task is already ticked off. |
+| `ReminderScheduler.kt` | Habit part works on the phone; task and block parts untested | Registers and cancels alarms with Android's `AlarmManager`: daily ones for habit reminders, one-off ones for tasks and Plan blocks. Re-registers all of them after a restart, and can cancel all of them before a restore. (D20, D29, D32) |
+| `ReminderReceiver.kt` | Habit part works on the phone; task and block parts untested | Android runs this when a reminder is due, with the app open or closed. For a habit it shows the notification, then schedules the same reminder for tomorrow. For a task or a Plan block it shows the notification once, unless it is already ticked off. |
 | `BootReceiver.kt` | Untested on a phone | Android runs this after a restart or a clock or time zone change. Re-registers every reminder, because Android forgets alarms on restart. |
-| `ReminderNotifications.kt` | Habit part works on the phone; task part untested | Creates the "Reminders" notification channel and builds habit and task notifications. They have no timeout, so they stay until dismissed or opened (D22). Tapping one opens the app with the habit's or task's id attached. |
+| `ReminderNotifications.kt` | Habit part works on the phone; task and block parts untested | Creates the "Reminders" notification channel and builds habit, task and Plan block notifications. They have no timeout, so they stay until dismissed or opened (D22). Tapping one opens the app with the item's id attached. |
 | `ReminderHealth.kt` | Untested on a phone | Checks the three phone settings reminders depend on: notifications allowed, exact alarms allowed, and the app excluded from battery optimisation. Also knows which system settings screen fixes each one. (D20) |
 
 ### `ui/`
 
 | File | Status | What it does |
 | --- | --- | --- |
-| `AppRoot.kt` | Untested on a phone | The app shell: the header with today's date (which changes at midnight) and the settings button, the floating bottom bar with Habits, Plan and Tasks, and the + button. Owns navigation between screens, including jumping to the right section when a reminder is tapped (`OpenTarget`). The settings button, and + on Plan, do nothing yet. |
+| `AppRoot.kt` | Untested on a phone | The app shell: the header with today's date (which changes at midnight) and the settings button, the floating bottom bar with Habits, Plan and Tasks, and the + button for each section. Owns navigation between screens: the add and edit habit routes, Settings, and jumping to the right section when a reminder is tapped (`OpenTarget`). |
 | `Placeholder.kt` | Working | `PlaceholderMessage`: a centred title and message, used for empty states and unbuilt screens. |
 | `theme/Theme.kt` | Working | The colours (dark background, green accent) and `TickTrackerTheme`. |
 | `habits/HabitsScreen.kt` | Untested on a phone | The Habits section: the Measure, Tick and Weekly tabs, the category filter chips, and the list of cards for the current tab, or an empty state. Also holds the dialog for typing a measurable amount and the delete confirmation. |
-| `habits/HabitsViewModel.kt` | Untested on a phone | Builds what each card shows (`HabitCardState`: the habit, its entries, today, its streak, its categories) and carries out the logging actions: tick, skip, resisted, slipped, set amount, reset, delete. Decides what a tap means, such as undoing a tick that is already done (D26). |
-| `habits/cards/CardParts.kt` | Untested on a phone | Pieces shared by all cards: the card frame, the header (icon, name, streak, buttons, overflow menu with Delete), the square action button, and `dayCellColor()`, which picks the colour of a day in a history grid. |
+| `habits/HabitsViewModel.kt` | Untested on a phone | Builds what each card shows (`HabitCardState`: the habit, its entries, today, its streak, its categories) and carries out the logging actions: tick, skip, resisted, slipped, set amount, reset, delete. The tap rules themselves live in `HabitRepository` (D26). |
+| `habits/cards/CardParts.kt` | Untested on a phone | Pieces shared by all cards: the card frame, the header (icon, name, streak, buttons, overflow menu with Edit and Delete), the square action button, and `dayCellColor()`, which picks the colour of a day in a history grid. |
 | `habits/cards/TickCard.kt` | Untested on a phone | A Tick habit's card: its buttons (tick; count such as 1/2; skip and tick; slipped and resisted) and the 20-week heatmap. (D12) |
 | `habits/cards/MeasureCard.kt` | Untested on a phone | A Measurable habit's card: today's amount against the target, the reset and + buttons, and the 7-week grid of values with a Total row. (D12, D15, D17) |
 | `habits/cards/WeeklyCard.kt` | Untested on a phone | Any habit on the Weekly tab: the current week as seven cells, with the week's progress. Display only. |
 | `habits/HabitVisuals.kt` | Works on the phone | The icons and colours a habit can use (`HabitIcons`, `HabitColors`), and `HabitBadge`, which draws a habit's icon on a circle of its colour. Used by the wizard and the cards. |
 | `habits/ReminderHealthBanner.kt` | Untested on a phone | The amber warning shown above the habit cards when a phone setting could delay or block reminders, with a Fix button per problem. Only appears once a habit has a reminder, and clears itself when the settings are fixed. |
-| `habits/add/AddHabitScreen.kt` | Works on the phone | The wizard's frame (D06): close or back button, the four-segment progress bar, the current step, and the Continue / Save Habit button. |
+| `habits/add/AddHabitScreen.kt` | Works on the phone (editing untested) | The wizard's frame (D06): close or back button, the four-segment progress bar, the current step, and the Continue / Save Habit / Save Changes button. Also used to edit a habit, starting at the name step (D31). |
 | `habits/add/AddHabitSteps.kt` | Works on the phone | The four steps: kind (Tick with Build or Quit, or Measurable); name, icon and colour; tracking (repeat goal or unit, goal and target) and categories; reminder times. Asks for the notification permission when reminders are switched on. |
-| `habits/add/AddHabitViewModel.kt` | Works on the phone | Holds everything chosen in the wizard (`AddHabitState`), decides whether a step is complete, and turns the choices into a saved habit. |
+| `habits/add/AddHabitViewModel.kt` | Works on the phone (editing untested) | Holds everything chosen in the wizard (`AddHabitState`), decides whether a step is complete, and turns the choices into a saved habit. In edit mode it loads the habit first and keeps the fixed fields unchanged (D31). |
 | `habits/add/WizardComponents.kt` | Works on the phone | Building blocks for the wizard: the progress bar, selectable chips, the − / + count stepper (D08), and the scrolling wheel used for the reminder time. |
-| `plan/PlanScreen.kt` | Placeholder | Where the day timeline will go. |
+| `plan/PlanScreen.kt` | Untested on a phone | The Plan section: the week strip, the day header with its arrows, and the timeline rows (gaps, items, now, wind down). Opens the Plan sheet or the task sheet depending on what is tapped. (D30, D32, D35) |
+| `plan/PlanViewModel.kt` | Untested on a phone | Gathers the chosen day's blocks and timed tasks (`PlanItem`), lays them out with `layoutDay()`, and carries out the Plan's actions: tick, save and delete. Habits are not on the Plan (D35). |
+| `plan/PlanSheet.kt` | Untested on a phone | The "Plan this slot" sheet: title, day, start and length, Task or Note, the list for a task, its reminder, and Delete for an existing note. (D30, D36) |
+| `settings/SettingsScreen.kt` | Untested on a phone | The Settings screen: the reminder warnings, the day's start and wind-down times, Export and Import with the file pickers and the import warning, and the app version. (D30, D33) |
+| `settings/SettingsViewModel.kt` | Untested on a phone | Checks and saves the day's times, and runs export and import, turning the result into a message. |
 | `tasks/TasksScreen.kt` | Untested on a phone | The Tasks section: the Timeline and All Tasks tabs, search, and the dialogs for adding, renaming and deleting a list. Decides which task is open in the sheet. |
 | `tasks/TasksViewModel.kt` | Untested on a phone | Supplies the tasks (each with its sub-tasks), the lists and today's date, and carries out the actions: tick, save, delete, and list changes. |
 | `tasks/TimelineTab.kt` | Untested on a phone | Tasks grouped by day along a vertical line: date heading, progress, open tasks, "All done!", a collapsible Completed list, and "Add task". |
 | `tasks/AllTasksTab.kt` | Untested on a phone | One list at a time: the row for switching, adding, renaming and deleting lists, then open tasks grouped by priority, "New Task", and a collapsible Completed list. |
-| `tasks/TaskSheet.kt` | Untested on a phone | The bottom sheet for creating and editing a task: title, date, time, reminder, repeat, list, priority and sub-tasks, with the pickers for each. Applies the rules that tie the fields together, such as a reminder needing a time. |
+| `tasks/TaskSheet.kt` | Untested on a phone | The bottom sheet for creating and editing a task: title, date, time, reminder, repeat, list, priority and sub-tasks, with the pickers for each. Applies the rules that tie the fields together, such as a reminder needing a time. Its date picker and options dialog are also used by the Plan sheet. Also opened from the Plan. |
 | `tasks/TaskParts.kt` | Untested on a phone | Pieces shared by the Tasks screens: the round tick box, a task row, the collapsible heading, priority colours, and the dialog for naming a list. |
 
 ### `util/`
 
 | File | Status | What it does |
 | --- | --- | --- |
-| `Dates.kt` | Working | `today()`: the current day, midnight to midnight (D19). `todayFlow()`: the current day, updated just after each midnight. Text helpers: `headerDate()` ("Today, 14th Nov"), `relativeDate()` ("Tomorrow", "Nov 16"), `formatClock()` ("6:00 PM"). |
+| `Dates.kt` | Working | `today()` and `todayFlow()`: the current day, midnight to midnight (D19). `nowMinute()` and `nowMinuteFlow()`: the time of day, updated each minute, for the Plan's now marker. Text helpers: `headerDate()`, `relativeDate()`, `formatClock()` ("6:00 PM"), `formatDuration()` ("3h 30m"). |
 | `Numbers.kt` | Working | `formatAmount()`: shows 5.0 as "5". `cleanDecimalInput()`: keeps typed amounts to plain numbers. |
 
 ## `app/src/main/res/`
@@ -212,11 +239,8 @@ The steps are the ones in [flow_state.md section 7](flow_state.md#7-tasks).
 | `kotlin/com/ticktracker/reminders/ReminderTimeTest.kt` | Checks `nextOccurrence()`: a reminder fires today if its time is ahead, tomorrow if it has passed or is exactly now. |
 | `kotlin/com/ticktracker/domain/HabitProgressTest.kt` | Checks the tracking rules: weeks start on Monday, daily and weekly streaks, an unfinished today not breaking a streak, skips, and what counts as a met day for each kind of habit. |
 | `kotlin/com/ticktracker/domain/TaskRulesTest.kt` | Checks the task rules: next dates for daily, weekly and monthly repeats, overdue repeats skipping past dates, and reminder times counted back from the task's time. |
+| `kotlin/com/ticktracker/domain/PlanLayoutTest.kt` | Checks the Plan layout: an empty day, the reference screenshot's day, overlaps, short gaps left out, items outside the day, and where the now marker goes. |
 
 ## Not built yet
 
-Things the flow needs that have no file yet:
-
-- Habit settings: editing a habit and its reminders after creation
-- Settings screen contents: the day's start and wind-down times (D30)
-- Everything for Plan: its blocks table, the timeline, and the "Plan this slot" sheet (D30)
+Nothing: every feature decided so far has a file. What remains is checking the parts marked "Untested on a phone" on a device.

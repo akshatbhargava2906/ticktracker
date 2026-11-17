@@ -44,13 +44,14 @@ fun TickCard(
     onResist: () -> Unit,
     onSlip: () -> Unit,
     onDelete: () -> Unit,
+    onEdit: () -> Unit,
 ) {
     val habit = card.habit
     val entry = card.todayEntry
     val color = Color(habit.color)
 
     HabitCardFrame(habit.color) {
-        HabitCardHeader(card, onDelete) {
+        HabitCardHeader(card, onDelete, onEdit = onEdit) {
             when {
                 habit.direction == HabitDirection.QUIT -> {
                     ActionButton(

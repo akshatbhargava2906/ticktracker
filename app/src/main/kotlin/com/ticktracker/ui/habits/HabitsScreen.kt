@@ -61,6 +61,8 @@ fun HabitsScreen(
     /** A habit to bring into view, set when the app was opened from its reminder. */
     focusHabitId: Long? = null,
     onFocusHandled: () -> Unit = {},
+    /** Opens the habit in the editor (D31). */
+    onEditHabit: (Long) -> Unit = {},
     viewModel: HabitsViewModel = viewModel(factory = HabitsViewModel.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -140,13 +142,15 @@ fun HabitsScreen(
             ) {
                 items(visible, key = { it.habit.id }) { card ->
                     val onDelete = { deleting = card.habit }
+                    val onEdit = { onEditHabit(card.habit.id) }
                     when {
-                        tab == HabitsTab.WEEKLY -> WeeklyCard(card, onDelete)
+                        tab == HabitsTab.WEEKLY -> WeeklyCard(card, onDelete, onEdit)
                         card.habit.kind == HabitKind.MEASURABLE -> MeasureCard(
                             card = card,
                             onEnterAmount = { enteringAmountFor = card },
                             onReset = { viewModel.onReset(card.habit.id) },
                             onDelete = onDelete,
+                            onEdit = onEdit,
                         )
                         else -> TickCard(
                             card = card,
@@ -155,6 +159,7 @@ fun HabitsScreen(
                             onResist = { viewModel.onResist(card) },
                             onSlip = { viewModel.onSlip(card) },
                             onDelete = onDelete,
+                            onEdit = onEdit,
                         )
                     }
                 }

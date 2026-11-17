@@ -2,9 +2,12 @@ package com.ticktracker
 
 import android.app.Application
 import android.content.Context
+import com.ticktracker.data.backup.BackupManager
 import com.ticktracker.data.db.AppDatabase
 import com.ticktracker.data.repository.HabitRepository
+import com.ticktracker.data.repository.PlanRepository
 import com.ticktracker.data.repository.TaskRepository
+import com.ticktracker.data.settings.SettingsStore
 import com.ticktracker.reminders.ReminderNotifications
 import com.ticktracker.reminders.ReminderScheduler
 import kotlinx.coroutines.CoroutineScope
@@ -24,20 +27,29 @@ class TickTrackerApp : Application() {
         container.appScope.launch {
             container.habitRepository.ensureBuiltInCategories()
             container.taskRepository.ensureDefaultList()
+            container.taskRepository.convertTaskBlocks()
         }
     }
 }
 
 /**
- * Hand-written dependency container: one database, one scheduler and the repositories,
- * shared by the screens and the reminder receivers.
+ * Hand-written dependency container: one database, one scheduler, the settings and the
+ * repositories, shared by the screens and the reminder receivers.
  */
 class AppContainer(context: Context) {
     /** For work that must outlive a screen, such as handling a reminder. */
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val database: AppDatabase = AppDatabase.create(context)
-    val reminderScheduler = ReminderScheduler(context, database.reminderDao(), database.taskDao())
+    val settingsStore = SettingsStore(context)
+    val reminderScheduler = ReminderScheduler(
+        context,
+        database.reminderDao(),
+        database.taskDao(),
+        database.planDao(),
+    )
     val habitRepository = HabitRepository(database, reminderScheduler)
     val taskRepository = TaskRepository(database, reminderScheduler)
+    val planRepository = PlanRepository(database.planDao(), reminderScheduler)
+    val backupManager = BackupManager(database, settingsStore, reminderScheduler, taskRepository)
 }

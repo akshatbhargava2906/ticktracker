@@ -67,6 +67,7 @@ fun HabitCardHeader(
     card: HabitCardState,
     onDelete: () -> Unit,
     progress: String? = null,
+    onEdit: () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     val habit = card.habit
@@ -83,7 +84,7 @@ fun HabitCardHeader(
                 .padding(horizontal = 12.dp),
         )
         actions()
-        OverflowMenu(onDelete)
+        OverflowMenu(onEdit, onDelete)
     }
 
     // The streak has a line of its own, across the full width of the card. Beside the
@@ -114,13 +115,20 @@ fun HabitCardHeader(
 }
 
 @Composable
-private fun OverflowMenu(onDelete: () -> Unit) {
+private fun OverflowMenu(onEdit: () -> Unit, onDelete: () -> Unit) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
             Icon(Icons.Filled.MoreVert, contentDescription = "More")
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            DropdownMenuItem(
+                text = { Text("Edit habit") },
+                onClick = {
+                    open = false
+                    onEdit()
+                },
+            )
             DropdownMenuItem(
                 text = { Text("Delete habit") },
                 onClick = {

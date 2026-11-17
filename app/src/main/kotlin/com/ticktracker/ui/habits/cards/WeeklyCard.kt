@@ -31,7 +31,7 @@ private val DAY_LABELS = listOf("M", "Tu", "W", "Th", "F", "Sa", "Su")
  * on the Tick and Measure tabs.
  */
 @Composable
-fun WeeklyCard(card: HabitCardState, onDelete: () -> Unit) {
+fun WeeklyCard(card: HabitCardState, onDelete: () -> Unit, onEdit: () -> Unit) {
     val habit = card.habit
     val monday = weekStart(card.today)
 
@@ -39,6 +39,7 @@ fun WeeklyCard(card: HabitCardState, onDelete: () -> Unit) {
         HabitCardHeader(
             card = card,
             onDelete = onDelete,
+            onEdit = onEdit,
             progress = habit.weekProgressText(card.entries, card.today),
         )
         Row(

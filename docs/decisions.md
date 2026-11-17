@@ -37,12 +37,18 @@ Every decision taken for TickTracker, in the order it was made, with the reason 
 | [D22](#d22-reminders-stay-until-dismissed) | 2026-11-14 | Reminders stay until dismissed | Active |
 | [D23](#d23-room-database-gradle-builds-direct-apk-install) | 2026-11-14 | Room database, Gradle builds, direct APK install | Active |
 | [D24](#d24-git-is-managed-by-the-owner-only) | 2026-11-14 | Git is managed by the owner only | Active |
-| [D25](#d25-project-setup) | 2026-11-14 | Project setup: package, SDK levels, structure | Proposed |
+| [D25](#d25-project-setup) | 2026-11-14 | Project setup: package, SDK levels, structure | Active |
 | [D26](#d26-tracking-behaviours-confirmed) | 2026-11-15 | Tracking behaviours confirmed | Active |
-| [D27](#d27-a-habit-can-be-deleted-from-its-card) | 2026-11-15 | A habit can be deleted from its card | Proposed |
+| [D27](#d27-a-habit-can-be-deleted-from-its-card) | 2026-11-15 | A habit can be deleted from its card | Active |
 | [D28](#d28-database-changes-never-delete-data) | 2026-11-15 | Database changes never delete data | Active |
 | [D29](#d29-tasks-the-full-task-sheet) | 2026-11-15 | Tasks: the full task sheet | Active |
-| [D30](#d30-what-the-plan-timeline-shows) | 2026-11-15 | What the Plan timeline shows | Active |
+| [D30](#d30-what-the-plan-timeline-shows) | 2026-11-15 | What the Plan timeline shows | Active, amended by D35 |
+| [D31](#d31-editing-a-habit) | 2026-11-17 | Editing a habit | Active |
+| [D32](#d32-plan-details) | 2026-11-17 | Plan details: habit blocks, block reminders, overlaps | Active, point 1 superseded by D35 |
+| [D33](#d33-backup-to-a-file) | 2026-11-17 | Backup to a file | Active |
+| [D34](#d34-dark-theme-only) | 2026-11-17 | Dark theme only | Active |
+| [D35](#d35-the-plan-is-for-day-planning-only) | 2026-11-17 | The Plan is for day planning only | Active |
+| [D36](#d36-tasks-planned-on-the-plan-are-real-tasks) | 2026-11-17 | Tasks planned on the Plan are real tasks | Active |
 
 ---
 
@@ -348,7 +354,7 @@ The options considered were a normal notification, one that stays until dismisse
 
 ## D25: Project setup
 
-**Date:** 2026-11-14 · **Status:** Proposed
+**Date:** 2026-11-14 · **Status:** Active (confirmed 2026-11-17)
 
 **Decision.** Choices made while creating the project skeleton:
 
@@ -390,11 +396,11 @@ The options considered were a normal notification, one that stays until dismisse
 
 ## D27: A habit can be deleted from its card
 
-**Date:** 2026-11-15 · **Status:** Proposed
+**Date:** 2026-11-15 · **Status:** Active (confirmed 2026-11-17)
 
-**Decision.** The overflow menu on every habit card has "Delete habit". After a confirmation, the habit is removed together with its history and its reminders. There is no undo and no way to edit a habit yet.
+**Decision.** The overflow menu on every habit card has "Delete habit". After a confirmation, the habit is removed together with its history and its reminders. There is no undo. Editing is D31.
 
-**Reason.** Added by the assistant while building the cards, so that habits created while testing can be removed. Not yet confirmed by the owner. What can be edited after creation is still open.
+**Reason.** Added by the assistant while building the cards, so that habits created while testing can be removed. Confirmed by the owner on 2026-11-17.
 
 **Effect.** Deleting is permanent: the entries are removed from the database, and the reminders are cancelled with Android.
 
@@ -453,7 +459,7 @@ Rules:
 
 ## D30: What the Plan timeline shows
 
-**Date:** 2026-11-15 · **Status:** Active
+**Date:** 2026-11-15 · **Status:** Active, amended by [D35](#d35-the-plan-is-for-day-planning-only) (habits are no longer shown) and [D36](#d36-tasks-planned-on-the-plan-are-real-tasks) (a planned Task is a real task; "Task in my list" is gone)
 
 **Decision.** The Plan timeline for a day shows three kinds of item:
 
@@ -469,13 +475,104 @@ The "Plan this slot" sheet asks for a title, a date, a start time and a duration
 
 **Effect.** Plan is a view across all three sections, not a separate silo: it reads tasks and habits as well as its own blocks. A settings screen is needed for the day's start and wind-down times. Plan is not built yet.
 
+## D31: Editing a habit
+
+**Date:** 2026-11-17 · **Status:** Active
+
+**Decision.** "Edit habit" in a card's overflow menu opens the add habit wizard filled in with the habit, starting at the name step, and ending with "Save Changes".
+
+| Can be changed | Cannot be changed |
+| --- | --- |
+| Name, icon, colour | Tick or Measurable |
+| Categories | Build or Quit |
+| Reminders | Repeat goal (once a day, multiple per day, weekly) |
+| Counts: times per day, times per week (stepper) | Unit |
+| Target amount (typed) | Goal period (everyday or weekly) |
+
+**Reason.** Proposed by the assistant and accepted by the owner. The fixed fields decide what an entry means: a count, a done day or an amount in a unit. Changing them would leave the existing history meaning something else. To change one, delete the habit and create a new one.
+
+**Effect.**
+
+- A new target or count applies to the whole history, not only from the day it changed. Past days are re-judged against it, so a streak can grow or shrink after an edit.
+- Saving replaces the habit's categories and reminders with the ones in the wizard, and re-registers the reminders with Android.
+- The wizard keeps the fixed fields as they were whatever is tapped, and says so on the tracking step.
+
+## D32: Plan details
+
+**Date:** 2026-11-17 · **Status:** Active, point 1 superseded by [D35](#d35-the-plan-is-for-day-planning-only) · **Builds on:** D30
+
+**Decision.**
+
+1. **Habit blocks.** A habit shows on the timeline as a 30-minute block at each of its reminder times, from the day it was created onward. It can be logged from there on today only (D16): Tick habits behave like their tick button, Quit habits are marked resisted, and Measurable habits open the amount dialog.
+2. **Block reminders.** A planned block of kind Task has the same one-off reminder as a task: at the start, or 5, 10, 15, 30 minutes or 1 hour before. Notes have no reminder. Tapping the reminder opens the Plan on the block's day.
+3. **Overlaps.** Items that overlap are listed one after another in time order. No gap is shown between them.
+4. **Gaps.** Free time from the day's start up to wind down is shown as a gap, with "Plan this slot", when it is at least 15 minutes long. Items before the day's start or after wind down still appear, in time order.
+5. **Now.** On today a "now" marker sits after anything already started and before the next thing still ahead.
+6. **The sheet.** "Plan this slot" opens with the gap's start time and up to an hour's length; the + button opens it at the next five minutes on today, or at the day's start on other days. It is saved with the tick in its corner; closing it any other way discards it. A "Task in my list" is saved as a task in the first list, with its time and length, so it shows in Tasks and on the timeline.
+7. **Tapping an item** opens it: a block in the Plan sheet, a task in the task sheet. Habits are only logged, not opened.
+
+**Reason.** Proposed by the assistant and accepted by the owner. Points 1 to 3 were the open questions left by D30; the rest follow the reference screenshot.
+
+**Effect.** The database moves to version 3 with a Plan blocks table, carried over automatically from version 2 (D28). The Plan reads tasks and habits as well as its own blocks, so ticking something there ticks it everywhere.
+
+## D33: Backup to a file
+
+**Date:** 2026-11-17 · **Status:** Active
+
+**Decision.** Settings has "Export data" and "Import data".
+
+- **Export** writes everything to one JSON file the user saves anywhere, such as Google Drive: habits, history, categories, reminders, tasks, lists, sub-tasks, Plan blocks and settings.
+- **Import** replaces everything in the app with the contents of a file, after a warning that the current data will be lost.
+- The file is read and checked in full before anything changes. A file that is not a TickTracker backup, is damaged, or comes from a newer version of the app is refused, and the app's data is left as it was.
+- After an import, every reminder is cancelled and set again from the restored data.
+
+**Reason.** The data lives only on the phone (D02), so uninstalling the app or losing the phone loses it. Proposed by the assistant and accepted by the owner.
+
+**Effect.** Backups are manual; nothing is copied anywhere unless the user exports. The file layout has its own version number, so later versions of the app can keep reading old backups.
+
+## D34: Dark theme only
+
+**Date:** 2026-11-17 · **Status:** Active
+
+**Decision.** The app has a dark theme only, with the green accent (D01). There is no light theme and no theme setting.
+
+**Reason.** Chosen by the owner.
+
+**Effect.** The colours stay defined once, in `ui/theme/Theme.kt`.
+
+## D35: The Plan is for day planning only
+
+**Date:** 2026-11-17 · **Status:** Active · **Amends:** D30 · **Supersedes:** D32 point 1
+
+**Decision.** Habits no longer appear on the Plan timeline. The Plan shows only blocks made with "Plan this slot" and tasks that have a time on that day. Habits are tracked and logged in the Habits section alone.
+
+**Reason.** The owner wants the Plan used solely for planning the day.
+
+**Effect.** Habit reminders still fire as before; they just have no block on the timeline. The Plan no longer reads habit data at all. Tasks with a time still appear, since a timed task is part of planning the day.
+
+## D36: Tasks planned on the Plan are real tasks
+
+**Date:** 2026-11-17 · **Status:** Active · **Amends:** D30, D32
+
+**Decision.** Anything planned as a **Task** on the Plan is saved as a task, so it appears in the Tasks section (Timeline and All Tasks) as well as on the Plan timeline, at its time. It is one task, not a copy: editing, ticking or deleting it in either place changes it in both. "What is this?" now offers two choices:
+
+- **Task:** saved as a task on that day, with its time, length and reminder, in the chosen list (the list choice appears when there is more than one list).
+- **Note:** just a record, such as "Scrolled Insta". Saved as a Plan block and shown on the Plan only, never in Tasks.
+
+"Task in my list" is gone, since every planned task is now in a list.
+
+**Reason.** The owner found that a task planned on the Plan did not appear in Tasks, while a task added in Tasks did appear on the Plan. With the Plan used for planning today and the days ahead, the two sections must show the same tasks: the Plan shows them in time order, Tasks shows them as lists.
+
+**Effect.**
+
+- Tasks planned before this change, which were stored as Plan blocks, are converted into real tasks in the first list when the app starts, keeping their day, time, length, reminder and done state. The same conversion runs after restoring an older backup.
+- A note being edited can be switched to Task; it then becomes a task and the note is removed.
+- Plan blocks are now only ever notes, so they never have a reminder. The database structure is unchanged.
+
 ---
 
 ## Open items
 
 Not yet decided. Each becomes a numbered decision when settled.
 
-- Plan: reminders for blocks, how long a habit's block is on the timeline, and what happens when items overlap.
-- Data export and backup, since data is device-only (D02).
-- Light theme, or dark only.
-- Editing a habit after it is created: what can be changed, and what happens to its history.
+None. Every question raised so far has been decided.

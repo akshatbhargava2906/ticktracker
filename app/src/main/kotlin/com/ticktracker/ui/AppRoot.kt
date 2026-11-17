@@ -45,11 +45,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.ticktracker.ui.habits.add.AddHabitScreen
+import com.ticktracker.ui.habits.add.AddHabitViewModel
+import com.ticktracker.ui.settings.SettingsScreen
 import com.ticktracker.ui.habits.HabitsScreen
 import com.ticktracker.ui.plan.PlanScreen
 import com.ticktracker.ui.tasks.TasksScreen
@@ -70,11 +74,16 @@ enum class Section(val route: String, val label: String, val icon: ImageVector) 
 sealed interface OpenTarget {
     data class Habit(val id: Long) : OpenTarget
     data class Task(val id: Long) : OpenTarget
+    data class Block(val id: Long) : OpenTarget
 }
 
 /** Routes that are not sections. They are shown full screen, without the shell. */
 object Routes {
     const val ADD_HABIT = "add-habit"
+    const val EDIT_HABIT = "edit-habit/{${AddHabitViewModel.ARG_HABIT_ID}}"
+    const val SETTINGS = "settings"
+
+    fun editHabit(id: Long) = "edit-habit/$id"
 }
 
 /** The app shell: header, the current screen, and the floating bottom bar. */
@@ -90,6 +99,7 @@ fun AppRoot(
 
     // How many times + was tapped on the Tasks section. The Tasks screen opens a new task for each.
     var addTaskRequests by rememberSaveable { mutableIntStateOf(0) }
+    var addPlanRequests by rememberSaveable { mutableIntStateOf(0) }
 
     // Opened from a reminder: leave whatever screen is showing and go to the section the
     // habit or task lives in. That screen then brings it into view.
@@ -97,6 +107,7 @@ fun AppRoot(
         val destination = when (openTarget) {
             is OpenTarget.Habit -> Section.HABITS
             is OpenTarget.Task -> Section.TASKS
+            is OpenTarget.Block -> Section.PLAN
             null -> return@LaunchedEffect
         }
         nav.navigate(destination.route) {
@@ -106,7 +117,7 @@ fun AppRoot(
     }
 
     Scaffold(
-        topBar = { if (section != null) AppHeader() },
+        topBar = { if (section != null) AppHeader(onSettings = { nav.navigate(Routes.SETTINGS) }) },
         bottomBar = {
             if (section != null) {
                 BottomBar(
@@ -115,7 +126,7 @@ fun AppRoot(
                     onAdd = {
                         when (section) {
                             Section.HABITS -> nav.navigate(Routes.ADD_HABIT)
-                            Section.PLAN -> Unit // TODO: add block flow, not designed yet
+                            Section.PLAN -> addPlanRequests++
                             Section.TASKS -> addTaskRequests++
                         }
                     },
@@ -135,9 +146,16 @@ fun AppRoot(
                 HabitsScreen(
                     focusHabitId = (openTarget as? OpenTarget.Habit)?.id,
                     onFocusHandled = onTargetOpened,
+                    onEditHabit = { nav.navigate(Routes.editHabit(it)) },
                 )
             }
-            composable(Section.PLAN.route) { PlanScreen() }
+            composable(Section.PLAN.route) {
+                PlanScreen(
+                    addRequests = addPlanRequests,
+                    openBlockId = (openTarget as? OpenTarget.Block)?.id,
+                    onBlockOpened = onTargetOpened,
+                )
+            }
             composable(Section.TASKS.route) {
                 TasksScreen(
                     addRequests = addTaskRequests,
@@ -146,6 +164,13 @@ fun AppRoot(
                 )
             }
             composable(Routes.ADD_HABIT) { AddHabitScreen(onClose = { nav.popBackStack() }) }
+            composable(
+                route = Routes.EDIT_HABIT,
+                arguments = listOf(navArgument(AddHabitViewModel.ARG_HABIT_ID) { type = NavType.LongType }),
+            ) {
+                AddHabitScreen(onClose = { nav.popBackStack() })
+            }
+            composable(Routes.SETTINGS) { SettingsScreen(onBack = { nav.popBackStack() }) }
         }
     }
 }
@@ -159,7 +184,7 @@ private fun NavHostController.switchSection(section: Section) {
 }
 
 @Composable
-private fun AppHeader() {
+private fun AppHeader(onSettings: () -> Unit) {
     // Follows the clock, so the date changes at midnight while the app is open.
     val date by remember { todayFlow() }.collectAsStateWithLifecycle(initialValue = today())
     Row(
@@ -175,7 +200,7 @@ private fun AppHeader() {
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
         )
-        IconButton(onClick = { /* TODO: settings screen */ }) {
+        IconButton(onClick = onSettings) {
             Icon(
                 imageVector = Icons.Filled.Settings,
                 contentDescription = "Settings",

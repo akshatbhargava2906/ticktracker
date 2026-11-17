@@ -1,13 +1,18 @@
 package com.ticktracker.domain
 
+import com.ticktracker.data.db.BlockKind
+import com.ticktracker.data.db.PlanBlockEntity
 import com.ticktracker.data.db.TaskEntity
 import com.ticktracker.data.model.TaskRepeat
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-/** The rules for task repeats and task reminders (D29). No Android code, so it is unit tested. */
+/**
+ * The rules for task repeats, and for one-off reminders on tasks and Plan blocks (D29, D30).
+ * No Android code, so it is unit tested.
+ */
 
-/** The choices for how early a task reminder fires, in minutes before the task's time. */
+/** The choices for how early a one-off reminder fires, in minutes before the start. */
 val REMINDER_OFFSETS: List<Int> = listOf(0, 5, 10, 15, 30, 60)
 
 fun reminderOffsetLabel(offsetMinutes: Int?): String = when (offsetMinutes) {
@@ -39,13 +44,17 @@ fun nextRepeatDate(date: LocalDate, repeat: TaskRepeat, today: LocalDate): Local
     }
 }
 
-/**
- * When the task's reminder should fire, or null if it has none.
- * A reminder needs a date, a time and a chosen offset.
- */
-fun TaskEntity.reminderAt(): LocalDateTime? {
+/** When a reminder [offsetMinutes] before [minuteOfDay] on [date] fires, or null if any part is missing. */
+fun reminderTime(date: LocalDate?, minuteOfDay: Int?, offsetMinutes: Int?): LocalDateTime? {
     val day = date ?: return null
-    val minute = timeMinute ?: return null
-    val offset = reminderOffsetMinutes ?: return null
+    val minute = minuteOfDay ?: return null
+    val offset = offsetMinutes ?: return null
     return day.atTime(minute / 60, minute % 60).minusMinutes(offset.toLong())
 }
+
+/** When the task's reminder should fire, or null if it has none. Needs a date, a time and an offset. */
+fun TaskEntity.reminderAt(): LocalDateTime? = reminderTime(date, timeMinute, reminderOffsetMinutes)
+
+/** When the block's reminder should fire, or null if it has none. Notes never have one. */
+fun PlanBlockEntity.reminderAt(): LocalDateTime? =
+    if (kind == BlockKind.NOTE) null else reminderTime(date, startMinute, reminderOffsetMinutes)

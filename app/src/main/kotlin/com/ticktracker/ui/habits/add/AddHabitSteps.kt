@@ -336,6 +336,15 @@ fun TrackingStep(
 ) {
     StepTitle("How do you track it?")
 
+    if (state.isEditing) {
+        Text(
+            text = "The kind of tracking, the repeat goal, the unit and the goal period are fixed " +
+                "once a habit is created. Counts, the target and categories can be changed.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 16.dp),
+        )
+    }
+
     when {
         state.kind == HabitKind.MEASURABLE -> MeasurableFields(state, viewModel)
         // Assumed: a Quit habit is judged once a day, so it has no repeat goal to choose.

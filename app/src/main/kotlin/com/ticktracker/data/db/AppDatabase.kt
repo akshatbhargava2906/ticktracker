@@ -15,6 +15,7 @@ import java.time.LocalDate
  * Versions:
  * 1. Habits, entries, categories, reminders.
  * 2. Adds tasks, task lists and sub-tasks (D29).
+ * 3. Adds Plan blocks (D30).
  */
 @Database(
     entities = [
@@ -26,13 +27,15 @@ import java.time.LocalDate
         TaskListEntity::class,
         TaskEntity::class,
         SubtaskEntity::class,
+        PlanBlockEntity::class,
     ],
     // Changing any entity means raising this number and adding a migration. See Migrations.kt.
-    version = 2,
+    version = 3,
     // Writes the structure of each version to app/schemas/, which migrations are built from.
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 2, to = 3),
     ],
 )
 @TypeConverters(Converters::class)
@@ -42,6 +45,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun reminderDao(): ReminderDao
     abstract fun taskDao(): TaskDao
+    abstract fun planDao(): PlanDao
+    abstract fun backupDao(): BackupDao
 
     companion object {
         fun create(context: Context): AppDatabase =

@@ -4,18 +4,19 @@ A personal habit tracker, day planner and task list for Android.
 
 TickTracker runs entirely on the phone. There is no account and no server: everything you log stays on the device, and reminders are scheduled by the phone itself, so they fire whether or not the app is open.
 
-> **Status:** project skeleton in place. The app builds and shows its three sections, but the screens are placeholders.
+> **Status:** feature complete. Habits, Plan, Tasks, reminders, settings and backup are all built. Some parts are still being checked on a phone; see [docs/file_guide.md](docs/file_guide.md).
 
 ## What it does
 
 - **Habits.** Track habits you tick off (build a routine, or quit one) and habits you measure (kilometres, pages, minutes). See streaks, a heatmap of recent months and the current week at a glance.
-- **Plan.** Lay out a day as a timeline of blocks, with the gaps between them shown so they can be filled.
-- **Tasks.** Keep tasks by date or by priority.
-- **Reminders.** Set one or several daily reminders on anything. A reminder stays on the phone until you dismiss it.
+- **Plan.** Lay out today or any day ahead as a timeline, with the gaps between items shown so they can be filled. Tasks planned here also appear in Tasks; notes stay on the Plan.
+- **Tasks.** Keep tasks by date or by priority, in several lists, with sub-tasks and repeats.
+- **Reminders.** Daily reminders on habits, and one-off reminders on tasks and planned blocks. A reminder stays on the phone until you dismiss it.
+- **Backup.** Export everything to a file and import it back, from Settings. The app keeps data only on the phone, so export now and then.
 
 ## How it is built
 
-A native Android app written in Kotlin with Jetpack Compose, storing its data in an on-device database.
+A native Android app written in Kotlin with Jetpack Compose, storing its data in an on-device database. Dark theme only.
 
 ## Documentation
 

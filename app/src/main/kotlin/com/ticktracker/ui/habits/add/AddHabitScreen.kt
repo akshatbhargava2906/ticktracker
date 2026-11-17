@@ -27,7 +27,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 /**
- * The four-step add habit wizard (D06, flow_state.md section 2).
+ * The four-step add habit wizard (D06, flow_state.md section 2). The same screen edits an
+ * existing habit, starting at the name step (D31).
  * This file is the frame: back / close, progress bar, the current step and the bottom button.
  * The steps themselves are in AddHabitSteps.kt.
  */
@@ -40,7 +41,7 @@ fun AddHabitScreen(
     val categories by viewModel.categories.collectAsStateWithLifecycle()
 
     // System back goes to the previous step; on the first step it leaves the wizard.
-    BackHandler(enabled = state.step > 0) { viewModel.back() }
+    BackHandler(enabled = !state.isFirstStep) { viewModel.back() }
 
     Column(
         Modifier
@@ -48,10 +49,10 @@ fun AddHabitScreen(
             .imePadding(),
     ) {
         IconButton(
-            onClick = { if (state.step == 0) onClose() else viewModel.back() },
+            onClick = { if (state.isFirstStep) onClose() else viewModel.back() },
             modifier = Modifier.padding(start = 8.dp, top = 4.dp),
         ) {
-            if (state.step == 0) {
+            if (state.isFirstStep) {
                 Icon(Icons.Filled.Close, contentDescription = "Close")
             } else {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -70,6 +71,7 @@ fun AddHabitScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp),
         ) {
+            if (!viewModel.loaded) return@Column
             when (state.step) {
                 0 -> KindStep(state, viewModel)
                 1 -> NameStep(state, viewModel)
@@ -80,7 +82,7 @@ fun AddHabitScreen(
 
         Button(
             onClick = { if (state.isLastStep) viewModel.save(onClose) else viewModel.next() },
-            enabled = state.canContinue && !state.saving,
+            enabled = viewModel.loaded && state.canContinue && !state.saving,
             shape = RoundedCornerShape(20.dp),
             modifier = Modifier
                 .fillMaxWidth()
@@ -88,7 +90,11 @@ fun AddHabitScreen(
                 .height(58.dp),
         ) {
             Text(
-                text = if (state.isLastStep) "Save Habit" else "Continue",
+                text = when {
+                    !state.isLastStep -> "Continue"
+                    state.isEditing -> "Save Changes"
+                    else -> "Save Habit"
+                },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )

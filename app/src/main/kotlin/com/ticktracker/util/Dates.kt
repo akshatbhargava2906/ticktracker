@@ -68,3 +68,26 @@ fun formatClock(minuteOfDay: Int): String {
     val suffix = if (hour24 < 12) "AM" else "PM"
     return String.format(Locale.ROOT, "%d:%02d %s", hour12, minuteOfDay % 60, suffix)
 }
+
+/** A length of time: "30 min", "1h", "3h 30m". */
+fun formatDuration(minutes: Int): String {
+    val hours = minutes / 60
+    val rest = minutes % 60
+    return when {
+        hours == 0 -> "$rest min"
+        rest == 0 -> "${hours}h"
+        else -> "${hours}h ${rest}m"
+    }
+}
+
+/** The current time of day in minutes after midnight. */
+fun nowMinute(): Int = java.time.LocalTime.now().let { it.hour * 60 + it.minute }
+
+/** [nowMinute], re-emitted at the start of every minute. */
+fun nowMinuteFlow(): Flow<Int> = flow {
+    while (true) {
+        emit(nowMinute())
+        val now = java.time.LocalTime.now()
+        delay((60 - now.second) * 1000L - now.nano / 1_000_000 + 50)
+    }
+}.distinctUntilChanged()

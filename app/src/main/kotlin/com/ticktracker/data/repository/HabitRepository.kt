@@ -8,6 +8,7 @@ import com.ticktracker.data.db.HabitEntity
 import com.ticktracker.data.db.HabitEntryEntity
 import com.ticktracker.data.db.ReminderEntity
 import com.ticktracker.data.model.EntryState
+import com.ticktracker.data.model.RepeatGoal
 import com.ticktracker.reminders.ReminderScheduler
 import com.ticktracker.util.today
 import java.time.LocalDate
@@ -39,6 +40,12 @@ class HabitRepository(
 
     /** Which habit belongs to which categories. */
     fun observeCategoryLinks(): Flow<List<HabitCategoryCrossRef>> = categories.observeLinks()
+
+    suspend fun getHabit(id: Long): HabitEntity? = habits.getById(id)
+
+    suspend fun getCategoryIds(habitId: Long): List<Long> = categories.getCategoryIdsFor(habitId)
+
+    suspend fun getReminders(habitId: Long): List<ReminderEntity> = reminders.getForHabit(habitId)
 
     /** How many reminders exist across all habits. */
     fun observeReminderCount(): Flow<Int> = reminders.observeCount()
@@ -79,6 +86,39 @@ class HabitRepository(
         return habitId
     }
 
+    /**
+     * Saves changes to an existing habit (D31): its details, categories and reminders.
+     * The kind of tracking cannot change, so those fields are always kept from the stored habit.
+     */
+    suspend fun updateHabit(
+        habit: HabitEntity,
+        categoryIds: List<Long>,
+        reminderMinutes: List<Int>,
+    ) {
+        val existing = habits.getById(habit.id) ?: return
+        reminders.getForHabit(habit.id).forEach { scheduler.cancel(it.id) }
+        val savedReminders = db.withTransaction {
+            habits.update(
+                habit.copy(
+                    kind = existing.kind,
+                    direction = existing.direction,
+                    repeatGoal = existing.repeatGoal,
+                    unit = existing.unit,
+                    goalPeriod = existing.goalPeriod,
+                    createdAt = existing.createdAt,
+                ),
+            )
+            categories.unlinkAll(habit.id)
+            categories.link(categoryIds.map { HabitCategoryCrossRef(habit.id, it) })
+            reminders.deleteForHabit(habit.id)
+            reminderMinutes.map { minute ->
+                val reminder = ReminderEntity(habitId = habit.id, minuteOfDay = minute)
+                reminder.copy(id = reminders.insert(reminder))
+            }
+        }
+        savedReminders.forEach(scheduler::schedule)
+    }
+
     suspend fun deleteHabit(habitId: Long) {
         reminders.getForHabit(habitId).forEach { scheduler.cancel(it.id) }
         habits.deleteById(habitId)
@@ -100,6 +140,29 @@ class HabitRepository(
     /** Measurable habits: set today's amount. Replaces any earlier amount (D17). */
     suspend fun setTodayAmount(habitId: Long, amount: Double) {
         entries.upsert(HabitEntryEntity(habitId, today(), amount = amount))
+    }
+
+    /**
+     * The tick button (D26). On a multiple-per-day habit each tap adds one, and a tap when full
+     * clears the day. On any other Build habit it marks today done, or undoes it if already done.
+     */
+    suspend fun tapTick(habitId: Long) {
+        val habit = habits.getById(habitId) ?: return
+        if (habit.repeatGoal == RepeatGoal.MULTIPLE_PER_DAY) {
+            val count = entries.get(habitId, today())?.count ?: 0
+            if (count >= (habit.targetCount ?: 1)) clearToday(habitId) else setTodayCount(habitId, count + 1)
+        } else {
+            toggleTodayState(habitId, EntryState.DONE)
+        }
+    }
+
+    /** Sets today's state, or clears the day if it is already in that state (D26). */
+    suspend fun toggleTodayState(habitId: Long, state: EntryState) {
+        if (entries.get(habitId, today())?.state == state) {
+            clearToday(habitId)
+        } else {
+            setTodayState(habitId, state)
+        }
     }
 
     /** Removes today's entry: the reset button (D15), or undoing a tick. */

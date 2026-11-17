@@ -43,10 +43,63 @@ class TaskRepository(
 
     fun observeLists(): Flow<List<TaskListEntity>> = dao.observeLists()
 
+    /** A stored task in the form the task sheet edits, with its sub-tasks. */
+    suspend fun getDraft(id: Long): TaskDraft? {
+        val task = dao.getTask(id) ?: return null
+        return TaskDraft(
+            id = task.id,
+            listId = task.listId,
+            title = task.title,
+            date = task.date,
+            timeMinute = task.timeMinute,
+            durationMinutes = task.durationMinutes,
+            reminderOffsetMinutes = task.reminderOffsetMinutes,
+            repeat = task.repeat,
+            priority = task.priority,
+            completed = task.completed,
+            subtasks = dao.getSubtasks(id).map { SubtaskDraft(it.title, it.completed) },
+        )
+    }
+
     /** Makes sure there is always at least one list. Safe to call on every launch. */
     suspend fun ensureDefaultList() {
         db.withTransaction {
             if (dao.listCount() == 0) addList(DEFAULT_LIST_NAME)
+        }
+    }
+
+    /**
+     * Turns Plan blocks of kind Task, made before D36, into real tasks in the first list, with
+     * the same day, time, length, reminder and done state. Safe to call on every launch:
+     * once converted, there is nothing left to convert.
+     */
+    suspend fun convertTaskBlocks() {
+        val planDao = db.planDao()
+        val converted = db.withTransaction {
+            val blocks = planDao.getTaskBlocks()
+            if (blocks.isEmpty()) return@withTransaction emptyList()
+            if (dao.listCount() == 0) addList(DEFAULT_LIST_NAME)
+            val listId = dao.getLists().first().id
+            blocks.map { block ->
+                val task = TaskEntity(
+                    listId = listId,
+                    title = block.title,
+                    date = block.date,
+                    timeMinute = block.startMinute,
+                    durationMinutes = block.durationMinutes,
+                    reminderOffsetMinutes = block.reminderOffsetMinutes,
+                    completed = block.completed,
+                    completedAt = if (block.completed) block.createdAt else null,
+                    createdAt = block.createdAt,
+                )
+                val taskId = dao.insertTask(task)
+                planDao.deleteById(block.id)
+                block.id to task.copy(id = taskId)
+            }
+        }
+        converted.forEach { (blockId, task) ->
+            scheduler.cancelBlock(blockId)
+            scheduler.scheduleTask(task)
         }
     }
 

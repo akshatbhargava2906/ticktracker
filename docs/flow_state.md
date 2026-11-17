@@ -2,9 +2,9 @@
 
 How TickTracker flows, from creating a habit to tracking it day after day, and what state each thing can be in along the way. The rules here come from [decisions.md](decisions.md); decision numbers such as (D16) point to the entry that set the rule.
 
-This file covers Habits, Tasks and reminders. Plan will be added when it is built.
+This file covers Habits, Tasks, Plan, reminders, settings and backup.
 
-Anything still undecided is listed in [Not yet decided](#8-not-yet-decided).
+Anything still undecided is listed in [Not yet decided](#11-not-yet-decided).
 
 ## 1. The whole flow at a glance
 
@@ -311,9 +311,84 @@ stateDiagram-v2
 - A reminder whose time has already passed is not scheduled.
 - Like habit reminders, it stays until dismissed, survives a restart, and is re-registered whenever the app is opened (section 6).
 
-## 8. Not yet decided
+## 8. Plan
 
-Questions found while writing this flow. Questions 1 to 7 and 9 were confirmed by the owner on 2026-11-15 and are now decision D26; the sections above already describe them. Only question 8 is still open.
+The Plan shows one day as a timeline, for planning the day only (D30, D32, D35). Habits are not on it; they are tracked in the Habits section. A week strip picks the day; arrows step a day at a time, and "Today" jumps back.
+
+### 8.1 What is on a day
+
+| Item | Comes from | Length | Tick circle |
+| --- | --- | --- | --- |
+| Task | Any task with a time on that day, whether planned here or added in Tasks (D36) | Its length, or 30 minutes | Ticks the task off, in Tasks too |
+| Note | "Plan this slot" with Note | As chosen | None: a note is only a record, and stays on the Plan |
+
+### 8.2 How the timeline is laid out
+
+```mermaid
+flowchart TD
+    A[Items of the day, sorted by start time] --> B{Free time since the last item?}
+    B -- 15 minutes or more, before wind down --> C[Gap row with Plan this slot]
+    B -- Less, or overlapping --> D[Item row]
+    C --> D
+    D --> E{More items?}
+    E -- Yes --> B
+    E -- No --> F[Gap up to wind down, then the Wind down row]
+    F --> G[On today: the now marker is placed after anything already started]
+```
+
+Free time is counted from the day's start to wind down (both set in Settings). Items outside that range still appear in time order; items at the same time are listed one after another.
+
+### 8.3 Planning a slot
+
+```mermaid
+flowchart TD
+    A[Plan this slot in a gap] --> S[Sheet: gap start, up to 1 hour]
+    B[+ in the bottom bar] --> S2[Sheet: next 5 minutes today, or the day's start]
+    C[Tap a note] --> S3[Sheet with the note, and Delete]
+    S --> K{What is this?}
+    S2 --> K
+    S3 --> K
+    K -- Task --> T[Saved as a task: shows in Tasks and on the Plan]
+    K -- Note --> N[Saved as a note: Plan only, nothing to tick]
+```
+
+A task is saved with its day, start time, length, list and optional reminder (D36). Tapping it on the Plan later opens the full task sheet, the same as in Tasks. The Plan sheet is saved with the tick in its corner; closing it any other way discards it.
+
+## 9. Editing a habit
+
+"Edit habit" in a card's menu opens the wizard at the name step, filled in with the habit (D31).
+
+```mermaid
+flowchart LR
+    A[Edit habit] --> B[Name, icon, colour] --> C[Counts or target, categories] --> D[Reminders] --> E[Save Changes]
+```
+
+- Tick or Measurable, Build or Quit, the repeat goal, the unit and the goal period stay as they are.
+- A changed target or count re-judges all past days, so the streak can change.
+- Saving replaces the categories and reminders, and re-registers the reminders.
+
+## 10. Settings and backup
+
+| Setting | Effect |
+| --- | --- |
+| Day starts at | Where free time on the Plan starts. Default 7:00 AM. Must be before wind down. |
+| Wind down at | Where the Wind down row sits. Default 10:00 PM. Must be after the day starts. |
+| Export data | Saves everything to a JSON file (D33). |
+| Import data | Replaces everything with a file's contents, after a warning (D33). |
+
+```mermaid
+flowchart TD
+    A[Import data] --> B[Warning: current data will be lost]
+    B -- Choose file --> C[Read and check the whole file]
+    C -- Not a backup, damaged, or from a newer app --> D[Error shown, nothing changed]
+    C -- Valid --> E[Cancel all reminders]
+    E --> F[Replace every table and the settings]
+    F --> G[Set every reminder again]
+```
+
+## 11. Not yet decided
+
+Questions found while writing this flow. All are now decided: questions 1 to 7 and 9 were confirmed on 2026-11-15 (D26), and question 8 on 2026-11-17 (D31).
 
 | # | Question | Answer | Status |
 | --- | --- | --- | --- |
@@ -324,5 +399,5 @@ Questions found while writing this flow. Questions 1 to 7 and 9 were confirmed b
 | 5 | Does a skipped day break a streak, and on which habits is skip available? | Skip exists only on weekly-goal habits, where it has no effect on the weekly count | Confirmed (D26) |
 | 6 | Is the streak shown as of yesterday, or does it include today once today is met? | Includes today once met | Confirmed (D26) |
 | 7 | Is a reminder skipped when the habit is already done for the day? | No, it always fires | Confirmed (D26) |
-| 8 | Editing a habit after creation: what can be changed, and what happens to its history? | Not decided. Deleting is built (D27); editing is not | Open |
+| 8 | Editing a habit after creation: what can be changed, and what happens to its history? | Name, icon, colour, categories, reminders, counts and target can change; the kind of tracking cannot. A new target re-judges past days | Confirmed (D31) |
 | 9 | Does a Quit habit get a repeat goal (multiple per day, weekly)? | No. A Quit habit is always judged once a day, so the wizard skips the repeat goal for it | Confirmed (D26) |

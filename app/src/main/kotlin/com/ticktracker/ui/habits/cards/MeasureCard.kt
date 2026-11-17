@@ -44,6 +44,7 @@ fun MeasureCard(
     onEnterAmount: () -> Unit,
     onReset: () -> Unit,
     onDelete: () -> Unit,
+    onEdit: () -> Unit,
 ) {
     val habit = card.habit
     val color = Color(habit.color)
@@ -58,7 +59,7 @@ fun MeasureCard(
     }
 
     HabitCardFrame(habit.color) {
-        HabitCardHeader(card, onDelete, progress = progress) {
+        HabitCardHeader(card, onDelete, progress = progress, onEdit = onEdit) {
             ActionButton(
                 active = false,
                 activeColor = color,

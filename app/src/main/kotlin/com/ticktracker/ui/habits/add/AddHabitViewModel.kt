@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -19,6 +20,7 @@ import com.ticktracker.data.model.RepeatGoal
 import com.ticktracker.data.repository.HabitRepository
 import com.ticktracker.ui.habits.HabitColors
 import com.ticktracker.ui.habits.HabitIcons
+import com.ticktracker.util.formatAmount
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -28,6 +30,8 @@ import kotlinx.coroutines.launch
 data class AddHabitState(
     /** 0 kind, 1 name, 2 tracking, 3 reminder. */
     val step: Int = 0,
+    /** The habit being edited, or null when creating a new one (D31). */
+    val editingId: Long? = null,
     val kind: HabitKind = HabitKind.TICK,
     val direction: HabitDirection = HabitDirection.BUILD,
     val name: String = "",
@@ -46,6 +50,13 @@ data class AddHabitState(
     val reminderMinutes: List<Int> = emptyList(),
     val saving: Boolean = false,
 ) {
+    val isEditing: Boolean get() = editingId != null
+
+    /** Editing starts at the name step: the kind of habit cannot change (D31). */
+    val firstStep: Int get() = if (isEditing) 1 else 0
+
+    val isFirstStep: Boolean get() = step == firstStep
+
     val isLastStep: Boolean get() = step == LAST_STEP
 
     /** The typed target as a number, or null if it is empty or not above zero. */
@@ -75,18 +86,88 @@ data class AddHabitState(
 
         val PER_DAY_RANGE = 2..20
         val PER_WEEK_RANGE = 1..7
+
+        /** The wizard filled in from an existing habit, opened at the name step. */
+        fun fromHabit(habit: HabitEntity, categoryIds: List<Long>, reminderMinutes: List<Int>): AddHabitState {
+            val unit = habit.unit
+            val knownUnit = unit != null && unit in UNITS
+            return AddHabitState(
+                step = 1,
+                editingId = habit.id,
+                kind = habit.kind,
+                direction = habit.direction ?: HabitDirection.BUILD,
+                name = habit.name,
+                icon = habit.icon,
+                color = habit.color,
+                repeatGoal = habit.repeatGoal ?: RepeatGoal.ONCE_A_DAY,
+                perDayCount = if (habit.repeatGoal == RepeatGoal.MULTIPLE_PER_DAY) habit.targetCount ?: 2 else 2,
+                perWeekCount = if (habit.repeatGoal == RepeatGoal.WEEKLY_GOAL) habit.targetCount ?: 3 else 3,
+                unit = when {
+                    unit == null -> "min"
+                    knownUnit -> unit
+                    else -> CUSTOM_UNIT
+                },
+                customUnit = if (unit != null && !knownUnit) unit else "",
+                targetText = habit.targetAmount?.let(::formatAmount).orEmpty(),
+                goalPeriod = habit.goalPeriod ?: GoalPeriod.EVERYDAY,
+                categoryIds = categoryIds.toSet(),
+                remindersOn = reminderMinutes.isNotEmpty(),
+                reminderMinutes = reminderMinutes.distinct().sorted(),
+            )
+        }
     }
 }
 
-class AddHabitViewModel(private val repository: HabitRepository) : ViewModel() {
-    var state by mutableStateOf(AddHabitState())
+/** Runs the add habit wizard, and the same wizard when editing a habit (D31). */
+class AddHabitViewModel(
+    private val repository: HabitRepository,
+    editHabitId: Long?,
+) : ViewModel() {
+    var state by mutableStateOf(AddHabitState(step = if (editHabitId != null) 1 else 0, editingId = editHabitId))
+        private set
+
+    /** False while an existing habit is still being read. */
+    var loaded by mutableStateOf(editHabitId == null)
         private set
 
     val categories: StateFlow<List<CategoryEntity>> = repository.observeCategories()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    init {
+        if (editHabitId != null) {
+            viewModelScope.launch {
+                val habit = repository.getHabit(editHabitId)
+                if (habit != null) {
+                    state = AddHabitState.fromHabit(
+                        habit = habit,
+                        categoryIds = repository.getCategoryIds(editHabitId),
+                        reminderMinutes = repository.getReminders(editHabitId).map { it.minuteOfDay },
+                    )
+                }
+                loaded = true
+            }
+        }
+    }
+
+    /**
+     * Applies a change from the screen. When editing, the fields that define the kind of
+     * tracking are kept as they were, whatever the change says (D31).
+     */
     fun update(change: (AddHabitState) -> AddHabitState) {
-        state = change(state)
+        val old = state
+        val next = change(old)
+        state = if (old.isEditing) {
+            next.copy(
+                kind = old.kind,
+                direction = old.direction,
+                repeatGoal = old.repeatGoal,
+                unit = old.unit,
+                customUnit = old.customUnit,
+                goalPeriod = old.goalPeriod,
+            )
+        } else {
+            next
+        }
     }
 
     fun next() {
@@ -94,7 +175,7 @@ class AddHabitViewModel(private val repository: HabitRepository) : ViewModel() {
     }
 
     fun back() {
-        if (state.step > 0) state = state.copy(step = state.step - 1)
+        if (!state.isFirstStep) state = state.copy(step = state.step - 1)
     }
 
     fun toggleCategory(id: Long) {
@@ -120,20 +201,21 @@ class AddHabitViewModel(private val repository: HabitRepository) : ViewModel() {
         state = state.copy(reminderMinutes = state.reminderMinutes - minuteOfDay)
     }
 
-    /** "Save Habit": stores the habit, its categories and reminders, then calls [onSaved]. */
+    /** "Save Habit" or "Save Changes": stores the habit, its categories and reminders, then calls [onSaved]. */
     fun save(onSaved: () -> Unit) {
         val s = state
         if (s.saving) return
         state = s.copy(saving = true)
 
         val isTick = s.kind == HabitKind.TICK
-        // Assumed: a Quit habit is always judged once a day, so it has no repeat goal choice.
+        // A Quit habit is always judged once a day, so it has no repeat goal (D26).
         val repeatGoal = when {
             !isTick -> null
             s.direction == HabitDirection.QUIT -> RepeatGoal.ONCE_A_DAY
             else -> s.repeatGoal
         }
         val habit = HabitEntity(
+            id = s.editingId ?: 0,
             name = s.name.trim(),
             icon = s.icon,
             color = s.color,
@@ -150,22 +232,27 @@ class AddHabitViewModel(private val repository: HabitRepository) : ViewModel() {
             goalPeriod = if (isTick) null else s.goalPeriod,
             createdAt = System.currentTimeMillis(),
         )
+        val reminders = if (s.remindersOn) s.reminderMinutes else emptyList()
 
         viewModelScope.launch {
-            repository.createHabit(
-                habit = habit,
-                categoryIds = s.categoryIds.toList(),
-                reminderMinutes = if (s.remindersOn) s.reminderMinutes else emptyList(),
-            )
+            if (s.isEditing) {
+                repository.updateHabit(habit, s.categoryIds.toList(), reminders)
+            } else {
+                repository.createHabit(habit, s.categoryIds.toList(), reminders)
+            }
             onSaved()
         }
     }
 
     companion object {
+        /** Navigation argument naming the habit to edit. Absent when adding a habit. */
+        const val ARG_HABIT_ID = "habitId"
+
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as TickTrackerApp
-                AddHabitViewModel(app.container.habitRepository)
+                val habitId = createSavedStateHandle().get<Long>(ARG_HABIT_ID)
+                AddHabitViewModel(app.container.habitRepository, habitId)
             }
         }
     }

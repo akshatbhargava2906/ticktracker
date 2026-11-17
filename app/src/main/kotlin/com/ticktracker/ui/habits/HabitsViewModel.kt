@@ -11,7 +11,6 @@ import com.ticktracker.data.db.CategoryEntity
 import com.ticktracker.data.db.HabitEntity
 import com.ticktracker.data.db.HabitEntryEntity
 import com.ticktracker.data.model.EntryState
-import com.ticktracker.data.model.RepeatGoal
 import com.ticktracker.data.repository.HabitRepository
 import com.ticktracker.domain.EntriesByDate
 import com.ticktracker.domain.streak
@@ -75,33 +74,23 @@ class HabitsViewModel(private val repository: HabitRepository) : ViewModel() {
         .map { it > 0 }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
-    /**
-     * The tick button. Tapping a completed tick undoes it.
-     * For a multiple-per-day habit each tap adds one; tapping when full clears the day.
-     */
-    fun onTick(card: HabitCardState) = viewModelScope.launch {
-        val habit = card.habit
-        val entry = card.todayEntry
-        if (habit.repeatGoal == RepeatGoal.MULTIPLE_PER_DAY) {
-            val count = entry?.count ?: 0
-            if (count >= (habit.targetCount ?: 1)) {
-                repository.clearToday(habit.id)
-            } else {
-                repository.setTodayCount(habit.id, count + 1)
-            }
-        } else {
-            toggleState(card, EntryState.DONE)
-        }
-    }
+    /** The tick button. Tapping a completed tick undoes it; multiple-per-day adds one (D26). */
+    fun onTick(card: HabitCardState) = viewModelScope.launch { repository.tapTick(card.habit.id) }
 
     /** The skip (−) button on weekly-goal habits. */
-    fun onSkip(card: HabitCardState) = viewModelScope.launch { toggleState(card, EntryState.SKIPPED) }
+    fun onSkip(card: HabitCardState) = viewModelScope.launch {
+        repository.toggleTodayState(card.habit.id, EntryState.SKIPPED)
+    }
 
     /** The shield button on Quit habits. */
-    fun onResist(card: HabitCardState) = viewModelScope.launch { toggleState(card, EntryState.RESISTED) }
+    fun onResist(card: HabitCardState) = viewModelScope.launch {
+        repository.toggleTodayState(card.habit.id, EntryState.RESISTED)
+    }
 
     /** The × button on Quit habits. */
-    fun onSlip(card: HabitCardState) = viewModelScope.launch { toggleState(card, EntryState.SLIPPED) }
+    fun onSlip(card: HabitCardState) = viewModelScope.launch {
+        repository.toggleTodayState(card.habit.id, EntryState.SLIPPED)
+    }
 
     /** Sets today's amount on a Measurable habit, replacing any earlier one (D17). */
     fun onSetAmount(habitId: Long, amount: Double) = viewModelScope.launch {
@@ -112,15 +101,6 @@ class HabitsViewModel(private val repository: HabitRepository) : ViewModel() {
     fun onReset(habitId: Long) = viewModelScope.launch { repository.clearToday(habitId) }
 
     fun onDelete(habitId: Long) = viewModelScope.launch { repository.deleteHabit(habitId) }
-
-    /** Sets today's state, or clears the day if it is already in that state. */
-    private suspend fun toggleState(card: HabitCardState, state: EntryState) {
-        if (card.todayEntry?.state == state) {
-            repository.clearToday(card.habit.id)
-        } else {
-            repository.setTodayState(card.habit.id, state)
-        }
-    }
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {

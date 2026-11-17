@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import com.ticktracker.MainActivity
 import com.ticktracker.R
 import com.ticktracker.data.db.HabitEntity
+import com.ticktracker.data.db.PlanBlockEntity
 import com.ticktracker.data.db.ReminderEntity
 import com.ticktracker.data.db.TaskEntity
 import com.ticktracker.util.formatClock
@@ -23,12 +24,16 @@ object ReminderNotifications {
     private const val CHANNEL_ID = "reminders"
     private const val TAG_HABIT = "habit"
     private const val TAG_TASK = "task"
+    private const val TAG_BLOCK = "block"
 
     /** Extra on the launch intent naming the habit the tapped reminder belongs to. */
     const val EXTRA_HABIT_ID = "habit_id"
 
     /** Extra on the launch intent naming the task the tapped reminder belongs to. */
     const val EXTRA_TASK_ID = "open_task_id"
+
+    /** Extra on the launch intent naming the Plan block the tapped reminder belongs to. */
+    const val EXTRA_BLOCK_ID = "open_block_id"
 
     fun createChannel(context: Context) {
         val channel = NotificationChannel(
@@ -64,6 +69,19 @@ object ReminderNotifications {
             text = task.timeMinute?.let { "Due at ${formatClock(it)}" } ?: "Task reminder",
             extraName = EXTRA_TASK_ID,
             extraValue = task.id,
+        )
+    }
+
+    /** Posts a Plan block reminder. */
+    fun showBlock(context: Context, block: PlanBlockEntity) {
+        post(
+            context = context,
+            tag = TAG_BLOCK,
+            id = block.id.toInt(),
+            title = block.title,
+            text = "Starts at ${formatClock(block.startMinute)}",
+            extraName = EXTRA_BLOCK_ID,
+            extraValue = block.id,
         )
     }
 

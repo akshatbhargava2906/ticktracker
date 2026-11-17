@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import androidx.room.Upsert
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +19,9 @@ interface HabitDao {
 
     @Insert
     suspend fun insert(habit: HabitEntity): Long
+
+    @Update
+    suspend fun update(habit: HabitEntity)
 
     @Query("DELETE FROM habits WHERE id = :id")
     suspend fun deleteById(id: Long)
@@ -63,6 +67,12 @@ interface CategoryDao {
 
     @Query("SELECT * FROM habit_categories")
     fun observeLinks(): Flow<List<HabitCategoryCrossRef>>
+
+    @Query("SELECT categoryId FROM habit_categories WHERE habitId = :habitId")
+    suspend fun getCategoryIdsFor(habitId: Long): List<Long>
+
+    @Query("DELETE FROM habit_categories WHERE habitId = :habitId")
+    suspend fun unlinkAll(habitId: Long)
 }
 
 @Dao
@@ -84,4 +94,7 @@ interface ReminderDao {
 
     @Query("DELETE FROM reminders WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("DELETE FROM reminders WHERE habitId = :habitId")
+    suspend fun deleteForHabit(habitId: Long)
 }

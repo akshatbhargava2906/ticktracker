@@ -471,7 +471,7 @@ private fun SubtasksCard(subtasks: List<SubtaskDraft>, onChange: (List<SubtaskDr
 
 /** A dialog listing choices, with the current one marked. Picking one closes it. */
 @Composable
-private fun <T> OptionsDialog(
+internal fun <T> OptionsDialog(
     title: String,
     options: List<T>,
     selected: T,
@@ -504,7 +504,7 @@ private fun <T> OptionsDialog(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DateDialog(initial: LocalDate, onDismiss: () -> Unit, onPick: (LocalDate) -> Unit) {
+internal fun DateDialog(initial: LocalDate, onDismiss: () -> Unit, onPick: (LocalDate) -> Unit) {
     // The date picker works in UTC milliseconds; a calendar day converts to and from UTC midnight.
     val state = rememberDatePickerState(
         initialSelectedDateMillis = initial.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
