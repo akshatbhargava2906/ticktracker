@@ -147,7 +147,7 @@ The steps are the ones in [flow_state.md section 7](flow_state.md#7-tasks).
 | `TaskEntities.kt` | Untested on a phone | The Tasks tables and their queries: `TaskListEntity` (a list such as "My Tasks"), `TaskEntity` (a task with its date, time, reminder, repeat, priority and done state), `SubtaskEntity` (a checklist item), and `TaskDao`. (D29) |
 | `AppDatabase.kt` | Untested on a phone | Ties the tables and queries into one Room database file, `ticktracker.db`. Holds the database version number (now 3) and the list of automatic upgrades between versions. `Converters` stores dates as day numbers. |
 | `PlanEntities.kt` | Untested on a phone | The Plan blocks table, `PlanBlockEntity` (title, day, start, length, kind), and `PlanDao`. Blocks are only notes now; kind Task is kept to read older data, which is converted into tasks (D36). |
-| `BackupDao.kt` | Untested on a phone | Reads every table, clears every table and inserts rows with their ids kept, for backup and restore. (D33) |
+| `BackupDao.kt` | Works on the phone | Reads every table, clears every table and inserts rows with their ids kept, for backup and restore. (D33) |
 | `Migrations.kt` | Working | The list of hand-written database upgrades (empty so far), and the steps to follow whenever a table changes, so that data on the phone is carried over and never deleted (D28). |
 
 ### `data/repository/`
@@ -162,8 +162,8 @@ The steps are the ones in [flow_state.md section 7](flow_state.md#7-tasks).
 
 | File | Status | What it does |
 | --- | --- | --- |
-| `settings/SettingsStore.kt` | Untested on a phone | Keeps the settings on the phone: the Plan day's start and wind-down times, and the theme (Light, Dark or Same as phone), and lets screens follow them as they change. (D30, D40) |
-| `backup/BackupManager.kt` | Untested on a phone | Writes everything to a JSON file, and restores from one: reads and checks the whole file first, then replaces every table and the settings, and resets all reminders. (D33) |
+| `settings/SettingsStore.kt` | Works on the phone | Keeps the settings on the phone: the Plan day's start and wind-down times, and the theme (Light, Dark or Same as phone), and lets screens follow them as they change. (D30, D40) |
+| `backup/BackupManager.kt` | Works on the phone | Writes everything to a JSON file, and restores from one: reads and checks the whole file first, then replaces every table and the settings, and resets all reminders. (D33) |
 
 ### `domain/`
 
@@ -206,8 +206,8 @@ The steps are the ones in [flow_state.md section 7](flow_state.md#7-tasks).
 | `plan/PlanScreen.kt` | Untested on a phone | The Plan section: the week strip, the day header with its arrows, and the timeline rows (gaps, items, now, wind down). Opens the Plan sheet or the task sheet depending on what is tapped. (D30, D32, D35) |
 | `plan/PlanViewModel.kt` | Untested on a phone | Gathers the chosen day's blocks and timed tasks (`PlanItem`), lays them out with `layoutDay()`, and carries out the Plan's actions: tick, save and delete. Habits are not on the Plan (D35). |
 | `plan/PlanSheet.kt` | Untested on a phone | The "Plan this slot" sheet: title, day, start and length, Task or Note, the list for a task, its reminder, and Delete for an existing note. (D30, D36) |
-| `settings/SettingsScreen.kt` | Untested on a phone | The Settings screen: the reminder warnings, the day's start and wind-down times, Export and Import with the file pickers and the import warning, and the app version. (D30, D33) |
-| `settings/SettingsViewModel.kt` | Untested on a phone | Checks and saves the day's times, and runs export and import, turning the result into a message. |
+| `settings/SettingsScreen.kt` | Works on the phone | The Settings screen: the reminder warnings, the day's start and wind-down times, Export and Import with the file pickers and the import warning, and the app version. (D30, D33) |
+| `settings/SettingsViewModel.kt` | Works on the phone | Checks and saves the day's times, and runs export and import, turning the result into a message. |
 | `tasks/TasksScreen.kt` | Untested on a phone | The Tasks section: the Timeline and All Tasks tabs, search, and the dialogs for adding, renaming and deleting a list. Decides which task is open in the sheet. |
 | `tasks/TasksViewModel.kt` | Untested on a phone | Supplies the tasks (each with its sub-tasks), the lists and today's date, and carries out the actions: tick, save, delete, and list changes. |
 | `tasks/TimelineTab.kt` | Untested on a phone | Tasks grouped by day along a vertical line: date heading, progress, open tasks, "All done!", a collapsible Completed list, and "Add task". |
