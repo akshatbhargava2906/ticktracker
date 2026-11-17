@@ -45,7 +45,7 @@ fun WeeklyCard(card: HabitCardState, onDelete: () -> Unit, onEdit: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 14.dp),
+                .padding(top = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             DAY_LABELS.forEachIndexed { index, label ->

@@ -286,7 +286,7 @@ The next date is counted from the task's own date (daily: the next day; weekly: 
 
 | Place | Shows |
 | --- | --- |
-| Timeline tab | Tasks that have a date, from every list, grouped by day with the newest day at the top. Always shows tomorrow, today and the last 14 days, plus any other day with a task. Each day shows its open tasks, a progress count, "All done!" when nothing is open, a collapsible Completed list, and "Add task". |
+| Timeline tab | Tasks that have a date, from every list, grouped by day with the newest day at the top. Shows the last 7 days, today and the next 365 days, newest at the top, opening at today (D37). Tasks dated outside that range appear only under All Tasks. Each day shows its open tasks, a progress count, "All done!" when nothing is open, a collapsible Completed list, and "Add task". |
 | All Tasks tab | One list at a time. Open tasks grouped by priority, High first, each sorted by date. Then "New Task" and a collapsible Completed list. Tasks with no date appear only here. |
 | Search | Narrows both tabs to tasks whose title contains the text. |
 

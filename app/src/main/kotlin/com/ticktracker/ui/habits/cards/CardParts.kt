@@ -49,11 +49,11 @@ private val IdleButton = Color(0xFF2A2A2A)
 fun HabitCardFrame(color: Long, content: @Composable ColumnScope.() -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(22.dp),
         color = CardSurface,
         border = BorderStroke(1.dp, Color(color).copy(alpha = 0.35f)),
     ) {
-        Column(Modifier.padding(16.dp), content = content)
+        Column(Modifier.padding(12.dp), content = content)
     }
 }
 
@@ -72,10 +72,10 @@ fun HabitCardHeader(
 ) {
     val habit = card.habit
     Row(verticalAlignment = Alignment.CenterVertically) {
-        HabitBadge(icon = habit.icon, color = habit.color, size = 52.dp)
+        HabitBadge(icon = habit.icon, color = habit.color, size = 40.dp)
         Text(
             text = habit.name,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -90,21 +90,24 @@ fun HabitCardHeader(
     // The streak has a line of its own, across the full width of the card. Beside the
     // buttons it was squeezed out of view on cards with two of them (Quit, weekly goal, Measure).
     Row(
-        modifier = Modifier.padding(top = 10.dp, start = 4.dp),
+        modifier = Modifier.padding(top = 6.dp, start = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = "🔥 " + habit.streakText(card.streak),
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
         )
         if (progress != null) {
             Text(
                 text = "  •  ",
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 text = progress,
+                style = MaterialTheme.typography.bodyMedium,
                 color = Color(habit.color),
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
@@ -152,9 +155,9 @@ fun ActionButton(
 ) {
     Surface(
         modifier = modifier
-            .padding(start = 8.dp)
-            .size(52.dp),
-        shape = RoundedCornerShape(16.dp),
+            .padding(start = 6.dp)
+            .size(42.dp),
+        shape = RoundedCornerShape(13.dp),
         color = if (active) activeColor else IdleButton,
         border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
         enabled = enabled,

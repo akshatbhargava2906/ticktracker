@@ -1,5 +1,6 @@
 package com.ticktracker.ui.habits.cards
 
+import com.ticktracker.ui.theme.PlusJakartaSans
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -63,7 +64,7 @@ fun TickCard(
                         active = entry?.state == EntryState.RESISTED,
                         activeColor = color,
                         onClick = onResist,
-                    ) { Text("🛡️", fontSize = 20.sp) }
+                    ) { Text("🛡️", fontSize = 17.sp) }
                 }
 
                 habit.repeatGoal == RepeatGoal.MULTIPLE_PER_DAY -> {
@@ -88,7 +89,7 @@ fun TickCard(
                 }
             }
         }
-        Heatmap(card, Modifier.padding(top = 14.dp))
+        Heatmap(card, Modifier.padding(top = 10.dp))
     }
 }
 
@@ -102,7 +103,7 @@ private const val HEATMAP_WEEKS = 20
 private fun Heatmap(card: HabitCardState, modifier: Modifier = Modifier) {
     val habit = card.habit
     val textMeasurer = rememberTextMeasurer()
-    val labelStyle = TextStyle(fontSize = 10.sp, color = TextMuted)
+    val labelStyle = TextStyle(fontSize = 10.sp, color = TextMuted, fontFamily = PlusJakartaSans)
 
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val labelWidth = 16.dp

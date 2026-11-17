@@ -122,8 +122,8 @@ fun TaskSheet(
                 TextField(
                     value = draft.title,
                     onValueChange = { draft = draft.copy(title = it.take(120)) },
-                    placeholder = { Text("Task title", style = MaterialTheme.typography.headlineSmall) },
-                    textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
+                    placeholder = { Text("Task title", style = MaterialTheme.typography.titleLarge) },
+                    textStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences,
                         imeAction = ImeAction.Done,
@@ -141,11 +141,11 @@ fun TaskSheet(
             }
 
             Surface(
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(18.dp),
                 color = SheetCard,
                 modifier = Modifier.padding(top = 8.dp),
             ) {
-                Column(Modifier.padding(vertical = 6.dp)) {
+                Column(Modifier.padding(vertical = 2.dp)) {
                     SettingRow(
                         icon = Icons.Filled.DateRange,
                         label = "Date",
@@ -216,7 +216,7 @@ fun TaskSheet(
                 onChange = { draft = draft.copy(subtasks = it) },
             )
 
-            HorizontalDivider(color = CardOutline, modifier = Modifier.padding(top = 16.dp))
+            HorizontalDivider(color = CardOutline, modifier = Modifier.padding(top = 12.dp))
             TextButton(
                 onClick = onDelete,
                 modifier = Modifier
@@ -311,7 +311,7 @@ fun TaskSheet(
 
 @Composable
 private fun RowDivider() {
-    HorizontalDivider(color = CardOutline, modifier = Modifier.padding(start = 68.dp))
+    HorizontalDivider(color = CardOutline, modifier = Modifier.padding(start = 56.dp))
 }
 
 /** One line of the sheet: an icon, a label, the current value, and a chevron. */
@@ -333,12 +333,12 @@ private fun SettingRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+            .padding(start = 12.dp, end = 4.dp, top = 5.dp, bottom = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
-                .size(38.dp)
+                .size(32.dp)
                 .background(
                     color = if (highlighted) green.copy(alpha = 0.16f) else Color(0xFF242424),
                     shape = RoundedCornerShape(10.dp),
@@ -362,7 +362,7 @@ private fun SettingRow(
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha),
             modifier = Modifier
                 .weight(1f)
-                .padding(start = 14.dp),
+                .padding(start = 12.dp),
         )
         Text(
             text = value,
@@ -403,11 +403,11 @@ private fun SubtasksCard(subtasks: List<SubtaskDraft>, onChange: (List<SubtaskDr
     }
 
     Surface(
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(18.dp),
         color = SheetCard,
-        modifier = Modifier.padding(top = 12.dp),
+        modifier = Modifier.padding(top = 8.dp),
     ) {
-        Column(Modifier.padding(start = 16.dp, end = 8.dp, top = 14.dp, bottom = 6.dp)) {
+        Column(Modifier.padding(start = 12.dp, end = 4.dp, top = 10.dp, bottom = 2.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Sub-tasks", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 if (subtasks.isNotEmpty()) {

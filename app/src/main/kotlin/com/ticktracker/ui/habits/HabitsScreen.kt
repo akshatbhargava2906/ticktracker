@@ -128,7 +128,7 @@ fun HabitsScreen(
         }
 
         if (hasReminders) {
-            ReminderHealthBanner(Modifier.padding(horizontal = 16.dp, vertical = 6.dp))
+            ReminderHealthBanner(Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
         }
 
         if (visible.isEmpty()) {
@@ -137,8 +137,8 @@ fun HabitsScreen(
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(visible, key = { it.habit.id }) { card ->
                     val onDelete = { deleting = card.habit }
@@ -206,7 +206,7 @@ private fun CategoryChips(
     Row(
         modifier = Modifier
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         categories.forEach { category ->
@@ -221,7 +221,8 @@ private fun CategoryChips(
                 Text(
                     text = category.name,
                     color = if (selected) colors.primary else colors.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 )
             }
         }

@@ -1,5 +1,9 @@
 package com.ticktracker.ui.tasks
 
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -38,12 +42,16 @@ import com.ticktracker.util.monthAndDay
 import com.ticktracker.util.shortWeekday
 import java.time.LocalDate
 
-/** How many days before today the timeline always shows, even when they have no tasks. */
-private const val PAST_DAYS_SHOWN = 14L
+/** How many days before today the timeline shows (D37). */
+private const val PAST_DAYS_SHOWN = 7L
+
+/** How many days after today the timeline shows (D37). */
+private const val FUTURE_DAYS_SHOWN = 365L
 
 /**
  * The Timeline tab (D01, D29): tasks grouped by day, newest day at the top.
- * Shows tomorrow, today and the last two weeks, plus any other day that has a task.
+ * Shows the last week, today and the year ahead, every day in that range whether or not it has
+ * a task (D37). Tasks outside the range are still listed under All Tasks.
  * Tasks with no date are not here; they are under All Tasks.
  */
 @Composable
@@ -55,8 +63,7 @@ fun TimelineTab(
     onAdd: (LocalDate) -> Unit,
 ) {
     val byDate = items.filter { it.task.date != null }.groupBy { it.task.date!! }
-    val window = (-PAST_DAYS_SHOWN..1L).map(today::plusDays)
-    val days = (byDate.keys + window).distinct().sortedDescending()
+    val days = (-PAST_DAYS_SHOWN..FUTURE_DAYS_SHOWN).map(today::plusDays).sortedDescending()
 
     // Which days have their "Completed" list open. Closed by default.
     val completedOpen = remember { mutableStateMapOf<LocalDate, Boolean>() }
@@ -68,7 +75,7 @@ fun TimelineTab(
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 16.dp),
     ) {
         items(days, key = { it.toEpochDay() }) { date ->
             DaySection(
@@ -86,6 +93,9 @@ fun TimelineTab(
     }
 }
 
+/** Height of a day's heading row. The dot on the line is centred on it. */
+private val HEADING_HEIGHT = 34.dp
+
 @Composable
 private fun DaySection(
     date: LocalDate,
@@ -102,102 +112,118 @@ private fun DaySection(
     val open = tasks.filter { !it.task.completed }
     val done = tasks.filter { it.task.completed }
     val hasTasks = tasks.isNotEmpty()
+    // Empty days are a single quiet line; days with tasks, and today, get the full section.
+    val expanded = hasTasks || isToday
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             // The vertical line down the left, with a dot beside each date.
             .drawBehind {
-                val x = 10.dp.toPx()
-                val dotY = 22.dp.toPx()
-                drawLine(CardOutline, Offset(x, 0f), Offset(x, size.height), strokeWidth = 2.dp.toPx())
+                val x = 6.dp.toPx()
+                val dotY = (HEADING_HEIGHT / 2).toPx()
+                drawLine(CardOutline, Offset(x, 0f), Offset(x, size.height), strokeWidth = 1.5.dp.toPx())
                 when {
-                    isToday -> drawCircle(green, radius = 9.dp.toPx(), center = Offset(x, dotY))
+                    isToday -> drawCircle(green, radius = 6.dp.toPx(), center = Offset(x, dotY))
                     hasTasks -> {
-                        drawCircle(Color(0xFF0B0B0B), radius = 7.dp.toPx(), center = Offset(x, dotY))
-                        drawCircle(green.copy(alpha = 0.7f), radius = 7.dp.toPx(), center = Offset(x, dotY), style = Stroke(2.dp.toPx()))
+                        drawCircle(Color(0xFF0B0B0B), radius = 5.dp.toPx(), center = Offset(x, dotY))
+                        drawCircle(
+                            green.copy(alpha = 0.7f),
+                            radius = 5.dp.toPx(),
+                            center = Offset(x, dotY),
+                            style = Stroke(1.5.dp.toPx()),
+                        )
                     }
-                    else -> drawCircle(CardOutline, radius = 6.dp.toPx(), center = Offset(x, dotY))
+                    else -> drawCircle(CardOutline, radius = 3.dp.toPx(), center = Offset(x, dotY))
                 }
             }
-            .padding(start = 36.dp, bottom = 12.dp),
+            .padding(start = 22.dp, bottom = if (expanded) 10.dp else 0.dp),
     ) {
-        // Date heading, with progress on the right, or a + when the day is empty.
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        // Date heading, with progress on the right, or a small + when the day is empty.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(HEADING_HEIGHT)
+                .then(if (expanded) Modifier else Modifier.clickable(onClick = onAdd)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 text = monthAndDay(date),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = if (hasTasks || isToday) FontWeight.SemiBold else FontWeight.Normal,
+                style = if (expanded) MaterialTheme.typography.titleSmall else MaterialTheme.typography.bodyMedium,
+                fontWeight = if (expanded) FontWeight.SemiBold else FontWeight.Normal,
                 color = when {
                     isToday -> green
                     hasTasks -> MaterialTheme.colorScheme.onSurface
-                    else -> TextMuted
+                    else -> TextMuted.copy(alpha = 0.7f)
                 },
             )
             Text(
                 text = shortWeekday(date),
-                color = TextMuted,
-                modifier = Modifier.padding(start = 8.dp),
+                color = TextMuted.copy(alpha = if (expanded) 1f else 0.7f),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 6.dp),
             )
             if (isToday) {
                 Surface(
                     color = green,
-                    shape = RoundedCornerShape(6.dp),
-                    modifier = Modifier.padding(start = 10.dp),
+                    shape = RoundedCornerShape(4.dp),
+                    modifier = Modifier.padding(start = 8.dp),
                 ) {
                     Text(
                         text = "TODAY",
                         color = MaterialTheme.colorScheme.onPrimary,
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
                     )
                 }
             }
-            Row(Modifier.weight(1f), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End) {
+            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.End) {
                 if (hasTasks) {
                     Text(
                         text = "${done.size}/${tasks.size}",
+                        style = MaterialTheme.typography.labelLarge,
                         color = if (open.isEmpty()) green else TextMuted,
-                        modifier = Modifier.padding(vertical = 12.dp),
                     )
-                } else {
-                    IconButton(onClick = onAdd) {
-                        Icon(Icons.Filled.Add, contentDescription = "Add task", tint = TextMuted)
-                    }
+                } else if (!isToday) {
+                    Icon(
+                        Icons.Filled.Add,
+                        contentDescription = "Add task",
+                        tint = TextMuted.copy(alpha = 0.6f),
+                        modifier = Modifier.size(16.dp),
+                    )
                 }
             }
         }
 
-        if (!hasTasks) return@Column
+        if (!expanded) return@Column
 
         open.forEach { item ->
             TaskRow(item, today, showDate = false, onToggle = { onToggle(item) }, onOpen = { onOpen(item) })
         }
 
-        if (open.isEmpty()) {
-            Surface(
+        if (hasTasks && open.isEmpty()) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                shape = RoundedCornerShape(16.dp),
-                color = green.copy(alpha = 0.08f),
-                border = BorderStroke(1.dp, green.copy(alpha = 0.3f)),
+                    .padding(vertical = 4.dp)
+                    .background(green.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = green)
-                    Text(
-                        text = "All done!",
-                        color = green,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(start = 10.dp),
-                    )
-                    Text(
-                        text = if (done.size == 1) "1 task completed" else "${done.size} tasks completed",
-                        color = TextMuted,
-                        modifier = Modifier.padding(start = 8.dp),
-                    )
-                }
+                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = green, modifier = Modifier.size(16.dp))
+                Text(
+                    text = "All done",
+                    color = green,
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+                Text(
+                    text = if (done.size == 1) "1 task completed" else "${done.size} tasks completed",
+                    color = TextMuted,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 6.dp),
+                )
             }
         }
 
@@ -213,25 +239,25 @@ private fun DaySection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
                 .clickable(onClick = onAdd)
-                .padding(vertical = 8.dp),
+                .padding(vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = Color.Transparent,
-                border = BorderStroke(1.dp, CardOutline),
-            ) {
-                Icon(
-                    Icons.Filled.Add,
-                    contentDescription = null,
-                    tint = TextMuted,
-                    modifier = Modifier
-                        .padding(4.dp)
-                        .size(20.dp),
-                )
-            }
-            Text("Add task", color = TextMuted, modifier = Modifier.padding(start = 12.dp))
+            Icon(
+                Icons.Filled.Add,
+                contentDescription = null,
+                tint = TextMuted,
+                modifier = Modifier
+                    .padding(horizontal = 3.dp)
+                    .size(16.dp),
+            )
+            Text(
+                "Add task",
+                color = TextMuted,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(start = 10.dp),
+            )
         }
     }
 }

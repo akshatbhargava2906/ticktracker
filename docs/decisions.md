@@ -49,6 +49,9 @@ Every decision taken for TickTracker, in the order it was made, with the reason 
 | [D34](#d34-dark-theme-only) | 2026-11-17 | Dark theme only | Active |
 | [D35](#d35-the-plan-is-for-day-planning-only) | 2026-11-17 | The Plan is for day planning only | Active |
 | [D36](#d36-tasks-planned-on-the-plan-are-real-tasks) | 2026-11-17 | Tasks planned on the Plan are real tasks | Active |
+| [D37](#d37-the-tasks-timeline-covers-a-week-back-and-a-year-ahead) | 2026-11-17 | The Tasks timeline covers a week back and a year ahead | Active |
+| [D38](#d38-compact-cards-and-smaller-text) | 2026-11-17 | Compact cards and smaller text | Active |
+| [D39](#d39-plus-jakarta-sans-and-tighter-spacing) | 2026-11-17 | Plus Jakarta Sans and tighter spacing | Active |
 
 ---
 
@@ -568,6 +571,45 @@ The "Plan this slot" sheet asks for a title, a date, a start time and a duration
 - Tasks planned before this change, which were stored as Plan blocks, are converted into real tasks in the first list when the app starts, keeping their day, time, length, reminder and done state. The same conversion runs after restoring an older backup.
 - A note being edited can be switched to Task; it then becomes a task and the note is removed.
 - Plan blocks are now only ever notes, so they never have a reminder. The database structure is unchanged.
+
+## D37: The Tasks timeline covers a week back and a year ahead
+
+**Date:** 2026-11-17 · **Status:** Active · **Amends:** D29
+
+**Decision.** The Timeline tab in Tasks shows every day from 7 days before today to 365 days after it, newest at the top, and opens at today. Days outside that range are not shown, even if they have tasks; those tasks are still listed under All Tasks.
+
+**Reason.** The owner could see two weeks back but only one day ahead, which made planning upcoming days impossible from the Timeline.
+
+**Effect.** Any day in the coming year can be opened and given tasks with its "Add task" or "+". An unfinished task more than a week overdue drops off the Timeline but stays under All Tasks, where it is shown in red as overdue.
+
+## D38: Compact cards and smaller text
+
+**Date:** 2026-11-17 · **Status:** Active
+
+**Decision.**
+
+- **Text:** every text style in the app is 86% of Material's default size. The phone's own font size setting still applies on top.
+- **Habit cards:** less padding (12 instead of 16), smaller corners, a 40 instead of 52 icon, 42 instead of 52 buttons, the habit name one size down, and less space between cards.
+- **Measure grid:** narrower day labels, smaller numbers and units, and cells with a minimum height instead of a fixed one, so a large font setting makes a cell taller instead of cutting off its number.
+
+**Reason.** On the owner's Galaxy S22 Ultra the cards were too big, the Measure card's grid overflowed, and the text was too large throughout.
+
+**Effect.** More fits on screen in every section. Sizes written directly in the code (such as the wizard's time wheel and the grid numbers) are unchanged by the text scale and were adjusted by hand where needed.
+
+## D39: Plus Jakarta Sans and tighter spacing
+
+**Date:** 2026-11-17 · **Status:** Active · **Builds on:** D38
+
+**Decision.**
+
+- **Font:** Plus Jakarta Sans is the typeface for all text in the app, in four weights (Regular, Medium, SemiBold, Bold). The font files are bundled in the app, so it works offline. The 86% text scale from D38 still applies.
+- **Spacing:** padding, margins and gaps are tightened across every screen, on a consistent 4 / 8 / 12 / 16 scale: 12 at the screen edges, 4 to 8 between related items, 10 to 16 between groups.
+- **Tasks Timeline:** an empty day is one quiet line (date, weekday and a small +) instead of a full heading with a large button. Days with tasks, and today, keep the full section, with smaller headings, 22 instead of 30 tick circles, rows without chevrons, and a lighter "All done" and "Add task".
+- **Elsewhere:** a slimmer header and bottom bar, smaller category chips, a narrower and shorter Plan timeline, and a tighter task sheet.
+
+**Reason.** The owner found the Tasks section overwhelming and asked for Plus Jakarta Sans throughout, with a compact, cohesive layout.
+
+**Effect.** The font's licence (SIL Open Font License 1.1) allows bundling; a copy is kept in `licenses/`. The app grows by about 0.5 MB for the font files.
 
 ---
 

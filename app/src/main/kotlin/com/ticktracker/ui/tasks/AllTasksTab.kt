@@ -91,7 +91,7 @@ fun AllTasksTab(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 16.dp),
         ) {
             PRIORITY_ORDER.forEach { priority ->
                 // Earliest date first; tasks with no date go last.
@@ -122,15 +122,15 @@ fun AllTasksTab(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(onClick = onAdd)
-                        .padding(vertical = 14.dp),
+                        .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Text(
                         text = "New Task",
                         color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(start = 12.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(start = 10.dp),
                     )
                 }
             }
@@ -165,7 +165,7 @@ private fun ListSwitcher(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 4.dp, top = 4.dp),
+            .padding(start = 12.dp, end = 0.dp, top = 0.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
@@ -179,14 +179,15 @@ private fun ListSwitcher(
                 Column(
                     modifier = Modifier
                         .clickable { onSelect(list.id) }
-                        .padding(end = 20.dp)
+                        .padding(end = 16.dp)
                         .width(androidx.compose.foundation.layout.IntrinsicSize.Max),
                 ) {
                     Text(
                         text = list.name,
                         color = if (isSelected) green else TextMuted,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                        modifier = Modifier.padding(vertical = 8.dp),
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(vertical = 6.dp),
                     )
                     Box(
                         Modifier

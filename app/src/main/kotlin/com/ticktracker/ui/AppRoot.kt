@@ -191,7 +191,7 @@ private fun AppHeader(onSettings: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+            .padding(start = 16.dp, end = 4.dp, top = 2.dp, bottom = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -220,7 +220,7 @@ private fun BottomBar(
         modifier = Modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
     ) {
         Surface(
             modifier = Modifier.align(Alignment.Center),
@@ -229,7 +229,7 @@ private fun BottomBar(
             border = BorderStroke(1.dp, CardOutline),
         ) {
             Row(
-                modifier = Modifier.padding(6.dp),
+                modifier = Modifier.padding(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Section.entries.forEach { section ->
@@ -262,13 +262,13 @@ private fun SectionButton(section: Section, selected: Boolean, onClick: () -> Un
             .clip(CircleShape)
             .background(if (selected) colors.primary else CardSurface)
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 14.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = section.icon,
             contentDescription = section.label,
-            modifier = Modifier.size(22.dp),
+            modifier = Modifier.size(20.dp),
             tint = if (selected) colors.onPrimary else colors.onSurfaceVariant,
         )
         if (selected) {

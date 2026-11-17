@@ -112,6 +112,7 @@ The steps are the ones in [flow_state.md section 7](flow_state.md#7-tasks).
 | `gradle/libs.versions.toml` | The single list of library and plugin versions. Change a version here, nowhere else. |
 | `gradlew`, `gradlew.bat`, `gradle/wrapper/` | The Gradle wrapper: downloads the right Gradle version and runs the build. `gradlew.bat` is for Windows. |
 | `local.properties` | Where the Android SDK is on this machine. Not committed. |
+| `licenses/PlusJakartaSans-OFL.txt` | The licence for the bundled font (SIL Open Font License 1.1). Must ship with the font. |
 
 ## `app/`
 
@@ -189,7 +190,7 @@ The steps are the ones in [flow_state.md section 7](flow_state.md#7-tasks).
 | --- | --- | --- |
 | `AppRoot.kt` | Untested on a phone | The app shell: the header with today's date (which changes at midnight) and the settings button, the floating bottom bar with Habits, Plan and Tasks, and the + button for each section. Owns navigation between screens: the add and edit habit routes, Settings, and jumping to the right section when a reminder is tapped (`OpenTarget`). |
 | `Placeholder.kt` | Working | `PlaceholderMessage`: a centred title and message, used for empty states and unbuilt screens. |
-| `theme/Theme.kt` | Working | The colours (dark background, green accent) and `TickTrackerTheme`. |
+| `theme/Theme.kt` | Working | The colours (dark background, green accent), the Plus Jakarta Sans font family, the compact text scale, and `TickTrackerTheme`. (D34, D38, D39) |
 | `habits/HabitsScreen.kt` | Untested on a phone | The Habits section: the Measure, Tick and Weekly tabs, the category filter chips, and the list of cards for the current tab, or an empty state. Also holds the dialog for typing a measurable amount and the delete confirmation. |
 | `habits/HabitsViewModel.kt` | Untested on a phone | Builds what each card shows (`HabitCardState`: the habit, its entries, today, its streak, its categories) and carries out the logging actions: tick, skip, resisted, slipped, set amount, reset, delete. The tap rules themselves live in `HabitRepository` (D26). |
 | `habits/cards/CardParts.kt` | Untested on a phone | Pieces shared by all cards: the card frame, the header (icon, name, streak, buttons, overflow menu with Edit and Delete), the square action button, and `dayCellColor()`, which picks the colour of a day in a history grid. |
@@ -231,6 +232,7 @@ The steps are the ones in [flow_state.md section 7](flow_state.md#7-tasks).
 | `drawable/ic_launcher_foreground.xml` | The tick drawn on the app icon. |
 | `drawable/ic_notification.xml` | The small tick shown in the status bar for a reminder. |
 | `mipmap-anydpi-v26/ic_launcher.xml` | The app icon: the tick on a green background. |
+| `font/plus_jakarta_sans_*.ttf` | The app's typeface, Plus Jakarta Sans, in Regular, Medium, SemiBold and Bold (D39). |
 
 ## `app/src/test/`
 

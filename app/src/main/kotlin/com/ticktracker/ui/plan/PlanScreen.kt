@@ -67,8 +67,8 @@ import com.ticktracker.util.shortMonth
 import com.ticktracker.util.shortWeekday
 import java.time.LocalDate
 
-private val TIME_COLUMN = 76.dp
-private val LINE_COLUMN = 64.dp
+private val TIME_COLUMN = 68.dp
+private val LINE_COLUMN = 52.dp
 
 /**
  * The Plan section (D30, D32, D35): a week strip, then the chosen day as a timeline of
@@ -129,7 +129,7 @@ fun PlanScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 8.dp, end = 12.dp),
+                .padding(start = 4.dp, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = { viewModel.selectDate(ui.date.minusDays(1)) }) {
@@ -152,7 +152,7 @@ fun PlanScreen(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp, end = 12.dp),
+            contentPadding = PaddingValues(top = 4.dp, bottom = 16.dp, end = 8.dp),
         ) {
             items(ui.entries, key = ::entryKey) { entry ->
                 when (entry) {
@@ -241,7 +241,7 @@ private fun WeekStrip(selected: LocalDate, today: LocalDate, onSelect: (LocalDat
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         (0L..6L).map(monday::plusDays).forEach { day ->
@@ -254,7 +254,7 @@ private fun WeekStrip(selected: LocalDate, today: LocalDate, onSelect: (LocalDat
                 onClick = { onSelect(day) },
             ) {
                 Column(
-                    Modifier.padding(vertical = 10.dp),
+                    Modifier.padding(vertical = 7.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     val color = if (isSelected) MaterialTheme.colorScheme.onPrimary else TextMuted
@@ -262,7 +262,7 @@ private fun WeekStrip(selected: LocalDate, today: LocalDate, onSelect: (LocalDat
                     Text(
                         text = day.dayOfMonth.toString(),
                         color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                     )
                 }
@@ -310,19 +310,19 @@ private fun TimelineRow(
 @Composable
 private fun GapRow(gap: TimelineEntry.Gap, showTime: Boolean, onPlan: () -> Unit) {
     val green = MaterialTheme.colorScheme.primary
-    TimelineRow(time = if (showTime) formatClock(gap.start) else null, minHeight = 120.dp) {
-        Column(Modifier.padding(vertical = 16.dp)) {
+    TimelineRow(time = if (showTime) formatClock(gap.start) else null, minHeight = 84.dp) {
+        Column(Modifier.padding(vertical = 10.dp)) {
             Text("🕒 ${formatDuration(gap.minutes)} gap", color = TextMuted)
             Surface(
-                modifier = Modifier.padding(top = 10.dp),
+                modifier = Modifier.padding(top = 6.dp),
                 shape = CircleShape,
                 color = green.copy(alpha = 0.08f),
                 border = BorderStroke(1.dp, green.copy(alpha = 0.5f)),
                 onClick = onPlan,
             ) {
-                Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.Add, contentDescription = null, tint = green, modifier = Modifier.size(18.dp))
-                    Text("Plan this slot", color = green, modifier = Modifier.padding(start = 6.dp))
+                Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Add, contentDescription = null, tint = green, modifier = Modifier.size(16.dp))
+                    Text("Plan this slot", color = green, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 4.dp))
                 }
             }
         }
@@ -335,15 +335,15 @@ private fun NowRow(minute: Int) {
     TimelineRow(
         time = formatClock(minute),
         timeColor = green,
-        minHeight = 36.dp,
+        minHeight = 28.dp,
         marker = {
             Box(
                 Modifier
-                    .size(22.dp)
+                    .size(18.dp)
                     .background(green.copy(alpha = 0.25f), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Box(Modifier.size(12.dp).background(green, CircleShape))
+                Box(Modifier.size(10.dp).background(green, CircleShape))
             }
         },
     )
@@ -353,12 +353,12 @@ private fun NowRow(minute: Int) {
 private fun WindDownRow(minute: Int) {
     TimelineRow(
         time = formatClock(minute),
-        minHeight = 72.dp,
-        marker = { Pill(color = Color(0xFF2A2A2A), height = 52.dp) { Text("🌙") } },
+        minHeight = 52.dp,
+        marker = { Pill(color = Color(0xFF2A2A2A), height = 40.dp) { Text("🌙") } },
     ) {
         Text(
             "Wind down",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(start = 4.dp),
         )
@@ -370,7 +370,7 @@ private fun WindDownRow(minute: Int) {
 private fun Pill(color: Color, height: Dp, content: @Composable () -> Unit) {
     Box(
         Modifier
-            .width(52.dp)
+            .width(40.dp)
             .height(height)
             .background(color, RoundedCornerShape(26.dp)),
         contentAlignment = Alignment.Center,
@@ -381,7 +381,7 @@ private fun Pill(color: Color, height: Dp, content: @Composable () -> Unit) {
 private fun ItemRow(item: PlanItem, start: Int, end: Int, onToggle: () -> Unit, onOpen: () -> Unit) {
     val green = MaterialTheme.colorScheme.primary
     // Half a dp per minute, so a 30-minute item is short and a 3-hour one is tall.
-    val pillHeight = (52 + (end - start) / 2).coerceIn(52, 150).dp
+    val pillHeight = (40 + (end - start) / 3).coerceIn(40, 120).dp
 
     val (pillColor, iconTint) = when (item) {
         is PlanItem.Block ->
@@ -397,7 +397,7 @@ private fun ItemRow(item: PlanItem, start: Int, end: Int, onToggle: () -> Unit, 
 
     TimelineRow(
         time = formatClock(start),
-        minHeight = pillHeight + 20.dp,
+        minHeight = pillHeight + 12.dp,
         marker = {
             Pill(color = pillColor, height = pillHeight) {
                 when (item) {
@@ -415,7 +415,7 @@ private fun ItemRow(item: PlanItem, start: Int, end: Int, onToggle: () -> Unit, 
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onOpen)
-                .padding(vertical = 8.dp),
+                .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
@@ -426,7 +426,7 @@ private fun ItemRow(item: PlanItem, start: Int, end: Int, onToggle: () -> Unit, 
                 )
                 Text(
                     text = item.title,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -443,7 +443,7 @@ private fun ItemRow(item: PlanItem, start: Int, end: Int, onToggle: () -> Unit, 
                 CheckCircle(
                     checked = done,
                     onClick = onToggle,
-                    size = 32.dp,
+                    size = 24.dp,
                     modifier = Modifier.padding(start = 8.dp),
                 )
             }

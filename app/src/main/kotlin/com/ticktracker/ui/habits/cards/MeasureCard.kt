@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -70,13 +71,13 @@ fun MeasureCard(
                 Icon(Icons.Filled.Add, contentDescription = "Enter today's amount", tint = tint)
             }
         }
-        MeasureGrid(card, Modifier.padding(top = 14.dp))
+        MeasureGrid(card, Modifier.padding(top = 10.dp))
     }
 }
 
 private const val GRID_WEEKS = 7
-private val DAY_LABEL_WIDTH = 40.dp
-private val CELL_GAP = 4.dp
+private val DAY_LABEL_WIDTH = 30.dp
+private val CELL_GAP = 3.dp
 
 /** Recent weeks as columns, Monday to Sunday as rows, and a Total row. Read-only (D16). */
 @Composable
@@ -96,7 +97,7 @@ private fun MeasureGrid(card: HabitCardState, modifier: Modifier = Modifier) {
                 val startsMonth = index == 0 || monday.month != mondays[index - 1].month
                 Text(
                     text = if (startsMonth) shortMonth(monday) else "",
-                    fontSize = 11.sp,
+                    fontSize = 10.sp,
                     color = TextMuted,
                     maxLines = 1,
                     softWrap = false,
@@ -114,7 +115,7 @@ private fun MeasureGrid(card: HabitCardState, modifier: Modifier = Modifier) {
                 Text(
                     text = mondays[0].plusDays(dayIndex.toLong()).dayOfWeek
                         .getDisplayName(TextStyle.SHORT, Locale.getDefault()),
-                    fontSize = 12.sp,
+                    fontSize = 10.sp,
                     color = color.copy(alpha = 0.7f),
                     modifier = Modifier.width(DAY_LABEL_WIDTH),
                 )
@@ -141,7 +142,7 @@ private fun MeasureGrid(card: HabitCardState, modifier: Modifier = Modifier) {
         ) {
             Text(
                 text = "Total",
-                fontSize = 12.sp,
+                fontSize = 10.sp,
                 color = color.copy(alpha = 0.7f),
                 modifier = Modifier.width(DAY_LABEL_WIDTH),
             )
@@ -178,25 +179,30 @@ private fun GridCell(
     }
     Box(
         modifier = modifier
-            .height(38.dp)
+            // A minimum rather than a fixed height: with a large font setting the cell grows
+            // to fit its number and unit instead of cutting them off.
+            .heightIn(min = 30.dp)
             .background(background, shape)
             .then(if (outlined) Modifier.border(1.5.dp, Color.White.copy(alpha = 0.8f), shape) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         if (value != null) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(vertical = 3.dp),
+            ) {
                 Text(
                     text = formatAmount(value),
-                    fontSize = 13.sp,
-                    lineHeight = 14.sp,
+                    fontSize = 11.sp,
+                    lineHeight = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = if (filled) Color.White else color,
                     maxLines = 1,
                 )
                 Text(
                     text = unit,
-                    fontSize = 8.sp,
-                    lineHeight = 9.sp,
+                    fontSize = 7.sp,
+                    lineHeight = 8.sp,
                     color = if (filled) Color.White else color.copy(alpha = 0.8f),
                     maxLines = 1,
                     overflow = TextOverflow.Clip,

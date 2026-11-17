@@ -1,5 +1,7 @@
 package com.ticktracker.ui.tasks
 
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -52,14 +54,14 @@ fun priorityColor(priority: TaskPriority): Color = when (priority) {
 
 /** The round tick box on tasks and sub-tasks: an empty ring, or a filled green tick. */
 @Composable
-fun CheckCircle(checked: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, size: Dp = 30.dp) {
+fun CheckCircle(checked: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, size: Dp = 22.dp) {
     val colors = MaterialTheme.colorScheme
     Box(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
             .background(if (checked) colors.primary else Color.Transparent)
-            .border(2.dp, if (checked) colors.primary else Color(0xFF8A8A8A), CircleShape)
+            .border(1.5.dp, if (checked) colors.primary else Color(0xFF6E6E6E), CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -68,7 +70,7 @@ fun CheckCircle(checked: Boolean, onClick: () -> Unit, modifier: Modifier = Modi
                 Icons.Filled.Check,
                 contentDescription = "Done",
                 tint = colors.onPrimary,
-                modifier = Modifier.size(size * 0.6f),
+                modifier = Modifier.size(size * 0.65f),
             )
         }
     }
@@ -93,24 +95,26 @@ fun TaskRow(
         task.timeMinute?.let(::formatClock),
         task.repeat.takeIf { it != TaskRepeat.NEVER }?.let { "↻ ${it.label}" },
         item.subtasks.takeIf { it.isNotEmpty() }?.let { "☑ ${item.subtasksDone}/${it.size}" },
-    ).joinToString("  ·  ")
+    ).joinToString(" · ")
 
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onOpen)
-            .padding(vertical = 8.dp),
+            .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CheckCircle(checked = task.completed, onClick = onToggle)
         Column(
             Modifier
                 .weight(1f)
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = 10.dp),
         ) {
             Text(
                 text = task.title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
                 color = if (task.completed) TextMuted else MaterialTheme.colorScheme.onSurface,
                 textDecoration = if (task.completed) TextDecoration.LineThrough else null,
                 maxLines = 2,
@@ -121,18 +125,22 @@ fun TaskRow(
             }
         }
         if (task.priority != TaskPriority.NONE) {
-            Text("⚑", color = priorityColor(task.priority), modifier = Modifier.padding(end = 8.dp))
+            Text(
+                "⚑",
+                color = priorityColor(task.priority),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(end = 6.dp),
+            )
         }
         val date = task.date
         if (showDate && date != null) {
             val overdue = !task.completed && date < today
             Text(
                 text = relativeDate(date, today),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = if (overdue) priorityColor(TaskPriority.HIGH) else TextMuted,
             )
         }
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = TextMuted)
     }
 }
 
@@ -149,8 +157,9 @@ fun CollapsibleHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onToggle)
-            .padding(vertical = 8.dp),
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -161,9 +170,20 @@ fun CollapsibleHeader(
             },
             contentDescription = if (expanded) "Collapse" else "Expand",
             tint = TextMuted,
+            modifier = Modifier.size(18.dp),
         )
-        Text(text = label, color = labelColor, modifier = Modifier.padding(start = 6.dp))
-        Text(text = count.toString(), color = TextMuted, modifier = Modifier.padding(start = 8.dp))
+        Text(
+            text = label,
+            color = labelColor,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(start = 4.dp),
+        )
+        Text(
+            text = count.toString(),
+            color = TextMuted,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(start = 6.dp),
+        )
     }
 }
 
